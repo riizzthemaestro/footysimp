@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>All Football Stats - Match Simulator</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+   <style>
+       body {
+           font-family: 'Inter', sans-serif;
+           background: #0a0a0a;
+           color: #e5e5e5;
+       }
+       .mono { font-family: 'JetBrains Mono', monospace; }
+       .glass {
+           background: rgba(255, 255, 255, 0.03);
+           backdrop-filter: blur(10px);
+           border: 1px solid rgba(255, 255, 255, 0.1);
+       }
+       .glass-hover:hover {
+           background: rgba(255, 255, 255, 0.06);
+           border-color: rgba(255, 255, 255, 0.2);
+       }
+       .gradient-text {
+           background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #10b981 100%);
+           -webkit-background-clip: text;
+           -webkit-text-fill-color: transparent;
+       }
+       .input-field {
+           background: rgba(0, 0, 0, 0.5);
+           border: 1px solid rgba(75, 85, 99, 0.5);
+           transition: all 0.2s ease;
+       }
+       .input-field:focus {
+           border-color: #22c55e;
+           box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+           outline: none;
+       }
+       .btn-calculate {
+           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+           transition: all 0.3s ease;
+           position: relative;
+           overflow: hidden;
+       }
+       .btn-calculate:hover {
+           transform: translateY(-2px);
+           box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.4);
+       }
+       .result-card { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+       @keyframes slideIn {
+           from { opacity: 0; transform: translateY(20px) scale(0.95); }
+           to { opacity: 1; transform: translateY(0) scale(1); }
+       }
+       .value-high { border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.1); }
+       .value-med { border-color: rgba(59,130,246,0.5); background: rgba(59,130,246,0.1); }
+       .value-low { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.1); }
+       .value-none { border-color: rgba(75,85,99,0.3); background: rgba(0,0,0,0.4); }
+       
+       .team-autocomplete-wrapper { position: relative; }
+       .team-dropdown {
+           display: none;
+           position: absolute;
+           top: calc(100% + 4px);
+           left: 0;
+           right: 0;
+           z-index: 9999;
+           background: #111827;
+           border: 1px solid rgba(34, 197, 94, 0.4);
+           border-radius: 8px;
+           max-height: 200px;
+           overflow-y: auto;
+           box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+       }
+       .team-dropdown.open { display: block; }
+       .team-dropdown-item {
+           padding: 8px 12px;
+           font-size: 13px;
+           color: #d1d5db;
+           cursor: pointer;
+           transition: background 0.15s ease;
+           border-bottom: 1px solid rgba(255,255,255,0.05);
+       }
+       .team-dropdown-item:hover, .team-dropdown-item.active {
+           background: rgba(34, 197, 94, 0.15);
+           color: #22c55e;
+       }
+       .team-dropdown-item .team-match-highlight {
+           color: #22c55e;
+           font-weight: 600;
+       }
+
+       .sim-button {
+           background: rgba(255, 255, 255, 0.1);
+           backdrop-filter: blur(10px);
+           border: 1px solid rgba(255, 255, 255, 0.2);
+           transition: all 0.2s ease;
+       }
+       .sim-button:hover:not(:disabled) {
+           background: rgba(255, 255, 255, 0.2);
+           transform: translateY(-1px);
+       }
+       .sim-button:disabled {
+           opacity: 0.4;
+           cursor: not-allowed;
+       }
+       
+       .progress-bar {
+           background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+           transition: width 0.3s ease;
+       }
+       
+       .mode-tab {
+           transition: all 0.3s ease;
+       }
+       .mode-tab.active {
+           background: rgba(34, 197, 94, 0.2);
+           border-color: #22c55e;
+           color: #22c55e;
+       }
+       
+       .stat-card {
+           background: rgba(0, 0, 0, 0.4);
+           border: 1px solid rgba(255, 255, 255, 0.1);
+       }
+       
+       input[type=range] {
+           -webkit-appearance: none;
+           background: transparent;
+       }
+       input[type=range]::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           height: 16px;
+           width: 16px;
+           border-radius: 50%;
+           background: #22c55e;
+           cursor: pointer;
+           margin-top: -6px;
+           box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+       }
+       input[type=range]::-webkit-slider-runnable-track {
+           width: 100%;
+           height: 4px;
+           cursor: pointer;
+           background: rgba(75, 85, 99, 0.5);
+           border-radius: 2px;
+       }
+       
+       .h2h-toggle {
+           position: relative;
+           width: 44px;
+           height: 24px;
+           background: rgba(75, 85, 99, 0.5);
+           border-radius: 12px;
+           cursor: pointer;
+           transition: all 0.3s ease;
+       }
+       .h2h-toggle.active {
+           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+       }
+       .h2h-toggle::after {
+           content: '';
+           position: absolute;
+           top: 2px;
+           left: 2px;
+           width: 20px;
+           height: 20px;
+           background: white;
+           border-radius: 50%;
+           transition: all 0.3s ease;
+           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+       }
+       .h2h-toggle.active::after {
+           left: 22px;
+       }
+       
+       .h2h-table-row:hover {
+           background: rgba(255, 255, 255, 0.05);
+       }
+       .h2h-input {
+           background: rgba(0, 0, 0, 0.3);
+           border: 1px solid rgba(75, 85, 99, 0.5);
+           color: white;
+           text-align: center;
+           width: 50px;
+           padding: 4px;
+           border-radius: 4px;
+           font-size: 12px;
+       }
+       .h2h-input:focus {
+           border-color: #22c55e;
+           outline: none;
+       }
+       
+       .h2h-badge {
+           display: inline-flex;
+           align-items: center;
+           gap: 4px;
+           padding: 2px 8px;
+           border-radius: 4px;
+           font-size: 11px;
+           font-weight: 600;
+       }
+       .h2h-badge.btts-yes {
+           background: rgba(34, 197, 94, 0.2);
+           color: #22c55e;
+           border: 1px solid rgba(34, 197, 94, 0.4);
+       }
+       .h2h-badge.btts-no {
+           background: rgba(239, 68, 68, 0.2);
+           color: #ef4444;
+           border: 1px solid rgba(239, 68, 68, 0.4);
+       }
+       
+       .weighting-option {
+           cursor: pointer;
+           transition: all 0.2s ease;
+       }
+       .weighting-option:hover {
+           background: rgba(255, 255, 255, 0.05);
+       }
+       .weighting-option.selected {
+           border-color: #22c55e;
+           background: rgba(34, 197, 94, 0.1);
+       }
+       
+       ::-webkit-scrollbar { width: 8px; }
+       ::-webkit-scrollbar-track { background: #0a0a0a; }
+       ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+       
+       /* Password Modal Styles */
+       .password-modal-overlay {
+           position: fixed;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background: rgba(0, 0, 0, 0.95);
+           backdrop-filter: blur(10px);
+           z-index: 10000;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           opacity: 0;
+           visibility: hidden;
+           transition: all 0.3s ease;
+       }
+       .password-modal-overlay.active {
+           opacity: 1;
+           visibility: visible;
+       }
+       .password-modal {
+           background: linear-gradient(145deg, #1a1a1a 0%, #0d0d0d 100%);
+           border: 1px solid rgba(34, 197, 94, 0.3);
+           border-radius: 16px;
+           padding: 40px;
+           max-width: 420px;
+           width: 90%;
+           transform: scale(0.9);
+           transition: all 0.3s ease;
+           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(34, 197, 94, 0.1);
+       }
+       .password-modal-overlay.active .password-modal {
+           transform: scale(1);
+       }
+       .password-input {
+           background: rgba(0, 0, 0, 0.6);
+           border: 2px solid rgba(75, 85, 99, 0.5);
+           color: #22c55e;
+           font-family: 'JetBrains Mono', monospace;
+           letter-spacing: 2px;
+           transition: all 0.3s ease;
+       }
+       .password-input:focus {
+           border-color: #22c55e;
+           box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+           outline: none;
+       }
+       .password-input.error {
+           border-color: #ef4444;
+           animation: shake 0.5s ease;
+       }
+       @keyframes shake {
+           0%, 100% { transform: translateX(0); }
+           25% { transform: translateX(-10px); }
+           75% { transform: translateX(10px); }
+       }
+       .btn-password {
+           background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+           transition: all 0.3s ease;
+       }
+       .btn-password:hover:not(:disabled) {
+           transform: translateY(-2px);
+           box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.4);
+       }
+       .btn-password:disabled {
+           opacity: 0.5;
+           cursor: not-allowed;
+       }
+       .countdown-badge {
+           background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%);
+           border: 1px solid rgba(34, 197, 94, 0.3);
+       }
+       .utc-clock {
+           font-family: 'JetBrains Mono', monospace;
+           color: #22c55e;
+           text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+       }
+   </style>
+   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8334786271452476"
+    crossorigin="anonymous"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 p-4 md:p-8">
+
+   <!-- Password Modal -->
+   <div id="passwordModal" class="password-modal-overlay">
+       <div class="password-modal">
+           <div class="text-center mb-6">
+               <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                   <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                   </svg>
+               </div>
+               <h2 class="text-2xl font-bold text-white mb-2">Access Required</h2>
+               <p class="text-sm text-gray-400">Welcome Back</p>
+           </div>
+
+           <div class="mb-6 p-4 rounded-lg bg-black/40 border border-gray-800">
+               <div class="flex items-center justify-between mb-2">
+                   <span class="text-xs text-gray-500 uppercase tracking-wider">Time</span>
+                   <span id="utcTimeDisplay" class="utc-clock text-lg font-bold">--:--</span>
+               </div>
+               <div class="text-xs text-gray-600">Password changes frequently</div>
+           </div>
+
+           <div class="space-y-4">
+               <div>
+                   <label class="block text-xs text-gray-400 mb-2 font-medium">16-Character Password</label>
+                   <input type="text" id="passwordInput" maxlength="16" placeholder="Enter password..."
+                       class="w-full password-input rounded-lg px-4 py-3 text-center text-lg font-bold uppercase">
+                   <div id="passwordError" class="text-red-400 text-xs mt-2 hidden">Invalid password. Please check UTC time and try again.</div>
+               </div>
+
+               <button id="submitPassword" class="w-full btn-password text-black font-bold py-3 rounded-lg text-sm">
+                   Verify Access
+               </button>
+
+               <div class="text-center">
+                   <p class="text-xs text-gray-500">Contact administrator for current password</p>
+               </div>
+           </div>
+
+           <div id="successMessage" class="hidden mt-6 p-4 rounded-lg bg-green-500/20 border border-green-500/40 text-center">
+               <div class="text-green-400 font-bold mb-1">✓ Access Granted</div>
+               <div class="text-xs text-green-300">Valid for 30 days</div>
+           </div>
+       </div>
+   </div>
+
+   <!-- Session Info Bar -->
+   <div id="sessionBar" class="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-green-500/20 transform -translate-y-full transition-transform duration-300">
+       <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+           <div class="flex items-center gap-3">
+               <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+               <span class="text-xs text-gray-300">Access Active</span>
+               <span id="sessionCountdown" class="countdown-badge px-2 py-0.5 rounded text-xs text-green-400 font-mono">-- days remaining</span>
+           </div>
+           <button onclick="authSystem.logout()" class="text-xs text-gray-500 hover:text-red-400 transition-colors">
+               Logout
+           </button>
+       </div>
+   </div>
+
+   <div id="mainContent" class="max-w-7xl mx-auto opacity-0 transition-opacity duration-500 pt-7">
+       <!-- Header -->
+       <header class="mb-8 text-center">
+           <div class="inline-flex items-center gap-2 mb-2">
+               <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+               </svg>
+               <h1 class="text-4xl md:text-5xl font-bold gradient-text italic tracking-tight">ALL FOOTBALL STATS</h1>
+           </div>
+           <p class="text-gray-400 text-sm md:text-base mb-4">Adaptive Form Weighting • H2H Analysis • Batch Simulation • xG Powered</p>
+           <div class="flex flex-wrap justify-center gap-2">
+               <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-green-400 border border-green-500/20">
+                   <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                   Auto-Weighting: 60% Form + 40% Quality
+               </span>
+               <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-purple-400 border border-purple-500/20">
+                   <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                   Monte Carlo Engine
+               </span>
+               <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs text-blue-400 border border-blue-500/20">
+                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                   </svg>
+                   H2H Filter
+               </span>
+           </div>
+       </header>
+
+       <div class="grid lg:grid-cols-12 gap-6">
+           <!-- Left Column: Smart Inputs -->
+           <div class="lg:col-span-4 space-y-4">
+               
+               <!-- Team Identity -->
+               <div class="glass rounded-2xl p-5 glass-hover transition-all">
+                   <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                       <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                       </svg>
+                       Match Setup
+                   </h2>
+                   <div class="grid grid-cols-2 gap-3 mb-4">
+                       <div>
+                           <label class="block text-xs text-gray-400 mb-1 font-medium">Home Team</label>
+                           <div class="team-autocomplete-wrapper">
+                               <input type="text" id="homeTeam" placeholder="Type 3 letters…" autocomplete="off"
+                                   class="w-full input-field rounded-lg px-3 py-2 text-white text-sm">
+                               <div id="homeTeamDropdown" class="team-dropdown"></div>
+                           </div>
+                       </div>
+                       <div>
+                           <label class="block text-xs text-gray-400 mb-1 font-medium">Away Team</label>
+                           <div class="team-autocomplete-wrapper">
+                               <input type="text" id="awayTeam" placeholder="Type 3 letters…" autocomplete="off"
+                                   class="w-full input-field rounded-lg px-3 py-2 text-white text-sm">
+                               <div id="awayTeamDropdown" class="team-dropdown"></div>
+                           </div>
+                       </div>
+                   </div>
+                   
+                   <div class="p-3 rounded-lg bg-black/40 border border-gray-800 mb-4">
+                       <label class="block text-xs text-gray-400 mb-2">League Average xG (for context)</label>
+                       <input type="number" id="leagueAvgXg" value="1.35" step="0.01" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                       <p class="text-[10px] text-gray-500 mt-1">Prem: 1.35 | Serie A: 1.32 | La Liga: 1.38</p>
+                   </div>
+               </div>
+
+               <!-- HOME TEAM -->
+               <div class="glass rounded-2xl p-5 border border-green-500/20">
+                   <div class="flex items-center justify-between mb-4">
+                       <h2 class="text-lg font-semibold text-white">Home Team Data</h2>
+                       <span class="text-xs px-2 py-1 rounded bg-green-500/20 text-green-400">Adaptive Weighting</span>
+                   </div>
+                   
+                   <div class="mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <label class="block text-xs text-gray-400 mb-2 font-medium">Season Baseline (Team Quality)</label>
+                       <div class="grid grid-cols-2 gap-2">
+                           <div>
+                               <span class="text-[10px] text-gray-500">xG For /90</span>
+                               <input type="number" id="homeSeasonAttack" step="0.01" placeholder="1.45" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                           </div>
+                           <div>
+                               <span class="text-[10px] text-gray-500">xG Against /90</span>
+                               <input type="number" id="homeSeasonDefense" step="0.01" placeholder="1.20" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                           </div>
+                       </div>
+                   </div>
+
+                   <div class="mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <div class="flex items-center justify-between mb-2">
+                           <label class="text-xs text-gray-400 font-medium">Last 5 Matches xG</label>
+                           <select id="homeTrend" class="text-[10px] bg-black/50 border border-gray-700 rounded px-2 py-1">
+                               <option value="improving">📈 Improving</option>
+                               <option value="stable" selected>➡️ Stable</option>
+                               <option value="declining">📉 Declining</option>
+                           </select>
+                       </div>
+                       <input type="number" id="homeLast5Attack" step="0.01" placeholder="Avg xG created last 5" class="w-full input-field rounded px-2 py-1 text-sm mono mb-2">
+                       <input type="number" id="homeLast5Defense" step="0.01" placeholder="Avg xG conceded last 5" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                       
+                       <div class="mt-2">
+                           <span class="text-[10px] text-gray-500">Opposition faced (last 5):</span>
+                           <select id="homeOppStrength" class="w-full mt-1 text-[10px] bg-black/50 border border-gray-700 rounded px-2 py-1">
+                               <option value="0.85">Weak (Bottom 5 teams)</option>
+                               <option value="0.95">Below Average</option>
+                               <option value="1.0" selected>Average</option>
+                               <option value="1.05">Above Average</option>
+                               <option value="1.15">Strong (Top 5 teams)</option>
+                           </select>
+                       </div>
+                   </div>
+
+                   <div class="p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <label class="block text-xs text-gray-400 mb-2">Home Advantage Factor</label>
+                       <div class="flex items-center gap-2">
+                           <input type="range" id="homeAdvantage" min="1.0" max="1.4" step="0.05" value="1.15" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                           <span id="homeAdvantageVal" class="text-sm mono text-green-400 w-12 text-right">1.15</span>
+                       </div>
+                       <p class="text-[10px] text-gray-500 mt-1">1.0 = No advantage | 1.4 = Fortress</p>
+                   </div>
+
+                   <!-- Home H2H Filter -->
+                   <div class="mt-4 p-4 rounded-xl bg-gradient-to-br from-green-900/20 to-black border border-green-500/30">
+                       <div class="flex items-center justify-between mb-4">
+                           <div class="flex items-center gap-3">
+                               <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                   <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                   </svg>
+                               </div>
+                               <div>
+                                   <h3 class="text-sm font-bold text-green-400">Home H2H Filter</h3>
+                                   <p class="text-[10px] text-gray-400">Last 5 opponents analysis</p>
+                               </div>
+                           </div>
+                           <div class="flex items-center gap-3">
+                               <span class="text-xs text-gray-400" id="homeH2hStatus">OFF</span>
+                               <div class="h2h-toggle" id="homeH2hToggle" onclick="homeH2hFilter.toggle()"></div>
+                           </div>
+                       </div>
+
+                       <div id="homeH2hWeightingOptions" class="hidden mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                           <p class="text-xs text-gray-400 mb-2">Apply H2H weighting:</p>
+                           <div class="grid grid-cols-2 gap-2">
+                               <div class="weighting-option selected p-2 rounded-lg border border-gray-700" onclick="homeH2hFilter.setWeighting('pre')" id="homeWeightPre">
+                                   <div class="flex items-center gap-2">
+                                       <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                       </svg>
+                                       <span class="text-xs text-white font-medium">Pre-Simulation</span>
+                                   </div>
+                                   <p class="text-[10px] text-gray-500 mt-1">Adjust probabilities before running</p>
+                               </div>
+                               <div class="weighting-option p-2 rounded-lg border border-gray-700" onclick="homeH2hFilter.setWeighting('post')" id="homeWeightPost">
+                                   <div class="flex items-center gap-2">
+                                       <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                       </svg>
+                                       <span class="text-xs text-white font-medium">Post-Adjustment</span>
+                                   </div>
+                                   <p class="text-[10px] text-gray-500 mt-1">Apply after batch results</p>
+                               </div>
+                           </div>
+                       </div>
+
+                       <div id="homeH2hTable" class="hidden">
+                           <div class="overflow-x-auto">
+                               <table class="w-full text-xs">
+                                   <thead>
+                                       <tr class="text-gray-400 border-b border-gray-700">
+                                           <th class="text-left py-2 px-2">Opponent</th>
+                                           <th class="text-center py-2 px-2">Home</th>
+                                           <th class="text-center py-2 px-2">vs</th>
+                                           <th class="text-center py-2 px-2">Opp</th>
+                                           <th class="text-center py-2 px-2">BTTS</th>
+                                       </tr>
+                                   </thead>
+                                   <tbody id="homeH2hTableBody"></tbody>
+                               </table>
+                           </div>
+                           
+                           <div class="mt-4 grid grid-cols-3 gap-3">
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">Scored</div>
+                                   <div id="homeH2hScored" class="text-lg font-bold text-green-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">Conceded</div>
+                                   <div id="homeH2hConceded" class="text-lg font-bold text-red-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">BTTS Freq</div>
+                                   <div id="homeH2hBttsFreq" class="text-lg font-bold text-blue-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                           </div>
+
+                           <div id="homeH2hImpact" class="mt-3 p-2 rounded-lg bg-green-500/10 border border-green-500/30 text-xs text-green-200 hidden">
+                               <div class="flex items-center gap-2">
+                                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                   </svg>
+                                   <span id="homeH2hImpactText">Attack strength adjusted by +0%</span>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- AWAY TEAM -->
+               <div class="glass rounded-2xl p-5 border border-blue-500/20">
+                   <div class="flex items-center justify-between mb-4">
+                       <h2 class="text-lg font-semibold text-white">Away Team Data</h2>
+                       <span class="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400">Adaptive Weighting</span>
+                   </div>
+                   
+                   <div class="mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <label class="block text-xs text-gray-400 mb-2 font-medium">Season Baseline (Team Quality)</label>
+                       <div class="grid grid-cols-2 gap-2">
+                           <div>
+                               <span class="text-[10px] text-gray-500">xG For /90</span>
+                               <input type="number" id="awaySeasonAttack" step="0.01" placeholder="1.60" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                           </div>
+                           <div>
+                               <span class="text-[10px] text-gray-500">xG Against /90</span>
+                               <input type="number" id="awaySeasonDefense" step="0.01" placeholder="1.10" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                           </div>
+                       </div>
+                   </div>
+
+                   <div class="mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <div class="flex items-center justify-between mb-2">
+                           <label class="text-xs text-gray-400 font-medium">Last 5 Matches xG</label>
+                           <select id="awayTrend" class="text-[10px] bg-black/50 border border-gray-700 rounded px-2 py-1">
+                               <option value="improving">📈 Improving</option>
+                               <option value="stable" selected>➡️ Stable</option>
+                               <option value="declining">📉 Declining</option>
+                           </select>
+                       </div>
+                       <input type="number" id="awayLast5Attack" step="0.01" placeholder="Avg xG created last 5" class="w-full input-field rounded px-2 py-1 text-sm mono mb-2">
+                       <input type="number" id="awayLast5Defense" step="0.01" placeholder="Avg xG conceded last 5" class="w-full input-field rounded px-2 py-1 text-sm mono">
+                       
+                       <div class="mt-2">
+                           <span class="text-[10px] text-gray-500">Opposition faced (last 5):</span>
+                           <select id="awayOppStrength" class="w-full mt-1 text-[10px] bg-black/50 border border-gray-700 rounded px-2 py-1">
+                               <option value="0.85">Weak (Bottom 5 teams)</option>
+                               <option value="0.95">Below Average</option>
+                               <option value="1.0" selected>Average</option>
+                               <option value="1.05">Above Average</option>
+                               <option value="1.15">Strong (Top 5 teams)</option>
+                           </select>
+                       </div>
+                   </div>
+
+                   <div class="p-3 rounded-lg bg-black/40 border border-gray-800">
+                       <label class="block text-xs text-gray-400 mb-2">Away Performance Factor</label>
+                       <div class="flex items-center gap-2">
+                           <input type="range" id="awayFactor" min="0.7" max="1.1" step="0.05" value="0.90" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                           <span id="awayFactorVal" class="text-sm mono text-blue-400 w-12 text-right">0.90</span>
+                       </div>
+                       <p class="text-[10px] text-gray-500 mt-1">0.7 = Poor travelers | 1.0 = No difference</p>
+                   </div>
+
+                   <!-- Away H2H Filter -->
+                   <div class="mt-4 p-4 rounded-xl bg-gradient-to-br from-blue-900/20 to-black border border-blue-500/30">
+                       <div class="flex items-center justify-between mb-4">
+                           <div class="flex items-center gap-3">
+                               <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                   <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                   </svg>
+                               </div>
+                               <div>
+                                   <h3 class="text-sm font-bold text-blue-400">Away H2H Filter</h3>
+                                   <p class="text-[10px] text-gray-400">Last 5 opponents analysis</p>
+                               </div>
+                           </div>
+                           <div class="flex items-center gap-3">
+                               <span class="text-xs text-gray-400" id="awayH2hStatus">OFF</span>
+                               <div class="h2h-toggle" id="awayH2hToggle" onclick="awayH2hFilter.toggle()"></div>
+                           </div>
+                       </div>
+
+                       <div id="awayH2hWeightingOptions" class="hidden mb-4 p-3 rounded-lg bg-black/40 border border-gray-800">
+                           <p class="text-xs text-gray-400 mb-2">Apply H2H weighting:</p>
+                           <div class="grid grid-cols-2 gap-2">
+                               <div class="weighting-option selected p-2 rounded-lg border border-gray-700" onclick="awayH2hFilter.setWeighting('pre')" id="awayWeightPre">
+                                   <div class="flex items-center gap-2">
+                                       <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                       </svg>
+                                       <span class="text-xs text-white font-medium">Pre-Simulation</span>
+                                   </div>
+                                   <p class="text-[10px] text-gray-500 mt-1">Adjust probabilities before running</p>
+                               </div>
+                               <div class="weighting-option p-2 rounded-lg border border-gray-700" onclick="awayH2hFilter.setWeighting('post')" id="awayWeightPost">
+                                   <div class="flex items-center gap-2">
+                                       <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                       </svg>
+                                       <span class="text-xs text-white font-medium">Post-Adjustment</span>
+                                   </div>
+                                   <p class="text-[10px] text-gray-500 mt-1">Apply after batch results</p>
+                               </div>
+                           </div>
+                       </div>
+
+                       <div id="awayH2hTable" class="hidden">
+                           <div class="overflow-x-auto">
+                               <table class="w-full text-xs">
+                                   <thead>
+                                       <tr class="text-gray-400 border-b border-gray-700">
+                                           <th class="text-left py-2 px-2">Opponent</th>
+                                           <th class="text-center py-2 px-2">Away</th>
+                                           <th class="text-center py-2 px-2">vs</th>
+                                           <th class="text-center py-2 px-2">Opp</th>
+                                           <th class="text-center py-2 px-2">BTTS</th>
+                                       </tr>
+                                   </thead>
+                                   <tbody id="awayH2hTableBody"></tbody>
+                               </table>
+                           </div>
+                           
+                           <div class="mt-4 grid grid-cols-3 gap-3">
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">Scored</div>
+                                   <div id="awayH2hScored" class="text-lg font-bold text-blue-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">Conceded</div>
+                                   <div id="awayH2hConceded" class="text-lg font-bold text-red-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                               <div class="p-3 rounded-lg bg-black/40 border border-gray-800 text-center">
+                                   <div class="text-[10px] text-gray-400 mb-1">BTTS Freq</div>
+                                   <div id="awayH2hBttsFreq" class="text-lg font-bold text-purple-400">0/5</div>
+                                   <div class="text-[10px] text-gray-500">0%</div>
+                               </div>
+                           </div>
+
+                           <div id="awayH2hImpact" class="mt-3 p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-200 hidden">
+                               <div class="flex items-center gap-2">
+                                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                   </svg>
+                                   <span id="awayH2hImpactText">Attack strength adjusted by +0%</span>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+
+               <!-- Market Odds -->
+               <div class="glass rounded-2xl p-5">
+                   <h2 class="text-lg font-semibold mb-4 text-white">Market Odds</h2>
+                   <div class="grid grid-cols-3 gap-2 text-xs mb-3">
+                       <div><label class="block text-gray-400 mb-1">1 (Home)</label><input type="number" id="odds1" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono text-center"></div>
+                       <div><label class="block text-gray-400 mb-1">X</label><input type="number" id="oddsX" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono text-center"></div>
+                       <div><label class="block text-gray-400 mb-1">2 (Away)</label><input type="number" id="odds2" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono text-center"></div>
+                   </div>
+                   <div class="grid grid-cols-2 gap-2 text-xs">
+                       <div><label class="block text-gray-400 mb-1">O 2.5</label><input type="number" id="oddsOver" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono"></div>
+                       <div><label class="block text-gray-400 mb-1">U 2.5</label><input type="number" id="oddsUnder" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono"></div>
+                       <div><label class="block text-gray-400 mb-1">BTTS Yes</label><input type="number" id="oddsBttsY" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono"></div>
+                       <div><label class="block text-gray-400 mb-1">BTTS No</label><input type="number" id="oddsBttsN" step="0.01" class="w-full input-field rounded px-2 py-1.5 mono"></div>
+                   </div>
+               </div>
+
+               <!-- Bankroll -->
+               <div class="glass rounded-2xl p-5">
+                   <h2 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+                       <span class="text-green-500">₦</span> Bankroll
+                   </h2>
+                   <div class="grid grid-cols-2 gap-3">
+                       <div>
+                           <label class="block text-xs text-gray-400 mb-1">Amount (₦)</label>
+                           <input type="number" id="bankroll" placeholder="Enter amount" min="1"
+                               class="w-full input-field rounded-lg px-3 py-2 mono text-sm">
+                       </div>
+                       <div>
+                           <label class="block text-xs text-gray-400 mb-1">Kelly %</label>
+                           <select id="kellyFrac" class="w-full input-field rounded-lg px-3 py-2 text-sm">
+                               <option value="0.125">12.5% (Safe)</option>
+                               <option value="0.25" selected>25% (Std)</option>
+                               <option value="0.5">50% (Aggro)</option>
+                           </select>
+                       </div>
+                   </div>
+               </div>
+
+               <button onclick="calculateSharp()" class="w-full btn-calculate text-black font-bold py-4 rounded-2xl text-lg shadow-lg shadow-green-500/20">
+                   CALCULATE SHARP EDGE
+               </button>
+           </div>
+
+           <!-- Right Column: Results & Simulation -->
+           <div class="lg:col-span-8 space-y-4">
+               
+               <!-- Model Explanation -->
+               <div id="modelInfo" class="hidden glass rounded-2xl p-5 border border-green-500/30 result-card">
+                   <h3 class="text-sm font-bold text-green-400 uppercase tracking-wider mb-3">Adaptive Weighting Breakdown</h3>
+                   <div class="grid md:grid-cols-2 gap-4 text-sm">
+                       <div class="p-3 rounded-lg bg-black/40">
+                           <div class="text-gray-400 text-xs mb-2">Home Team Calculation</div>
+                           <div id="homeCalcDetail" class="space-y-1 text-xs mono"></div>
+                       </div>
+                       <div class="p-3 rounded-lg bg-black/40">
+                           <div class="text-gray-400 text-xs mb-2">Away Team Calculation</div>
+                           <div id="awayCalcDetail" class="space-y-1 text-xs mono"></div>
+                       </div>
+                   </div>
+                   <div class="mt-3 p-3 rounded bg-green-900/20 border border-green-500/20">
+                       <p class="text-xs text-green-200">
+                           <strong>Formula:</strong> Final xG = (Season × 0.4) + (Last5 × 0.6 × Trend × OppAdj) × VenueFactor
+                       </p>
+                   </div>
+               </div>
+
+               <!-- Expected Goals Display -->
+               <div class="glass rounded-2xl p-5">
+                   <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Expected Goals (xG)</h3>
+                   <div class="flex items-center justify-center gap-8 mb-4">
+                       <div class="text-center">
+                           <div id="finalHomeXg" class="text-4xl font-bold mono text-green-400">--</div>
+                           <div id="displayHomeTeam" class="text-xs text-gray-400 mt-1">Home</div>
+                       </div>
+                       <div class="text-2xl text-gray-600">vs</div>
+                       <div class="text-center">
+                           <div id="finalAwayXg" class="text-4xl font-bold mono text-blue-400">--</div>
+                           <div id="displayAwayTeam" class="text-xs text-gray-400 mt-1">Away</div>
+                       </div>
+                   </div>
+                   <div class="w-full bg-gray-800 rounded-full h-3 flex">
+                       <div id="xgBarHome" class="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-l-full transition-all duration-700" style="width: 50%"></div>
+                       <div id="xgBarAway" class="h-full bg-gradient-to-l from-blue-600 to-blue-400 rounded-r-full transition-all duration-700" style="width: 50%"></div>
+                   </div>
+                   <div class="flex justify-between text-xs text-gray-500 mt-2">
+                       <span id="homeXgBreakdown">Enter data and click Calculate</span>
+                       <span id="totalXg">Total: --</span>
+                       <span id="awayXgBreakdown">Enter data and click Calculate</span>
+                   </div>
+               </div>
+
+               <!-- Top Value Bets -->
+               <div id="valueSection" class="hidden glass rounded-2xl p-5 border-2 border-green-500/50 result-card">
+                   <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                       <span class="text-green-500">★</span> SHARP VALUE DETECTED
+                   </h3>
+                   <div id="valueBetsGrid" class="grid md:grid-cols-3 gap-3"></div>
+               </div>
+
+               <!-- All Markets -->
+               <div class="glass rounded-2xl p-5">
+                   <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">All Markets Analysis</h3>
+                   <div id="allMarkets" class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+               </div>
+
+               <!-- Correct Score -->
+               <div class="glass rounded-2xl p-5">
+                   <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Correct Score Probabilities</h3>
+                   <div id="scoreGrid" class="grid grid-cols-6 gap-2"></div>
+               </div>
+
+               <!-- OPTIMIZED MATCH SIMULATOR -->
+               <div id="simulatorContainer" class="hidden glass rounded-2xl p-5 border border-purple-500/30 result-card">
+                   <div class="flex items-center justify-between mb-6">
+                       <h2 class="text-lg font-semibold flex items-center gap-2 text-white">
+                           <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                           </svg>
+                           Match Simulator
+                       </h2>
+                       
+                       <!-- Mode Switcher -->
+                       <div class="flex bg-black/40 rounded-lg p-1 border border-gray-700">
+                           <button onclick="simulator.setMode('manual')" id="modeManual" class="mode-tab active px-4 py-1.5 rounded-md text-xs font-medium text-gray-400 hover:text-white">
+                               Manual
+                           </button>
+                           <button onclick="simulator.setMode('batch')" id="modeBatch" class="mode-tab px-4 py-1.5 rounded-md text-xs font-medium text-gray-400 hover:text-white">
+                               Batch (500)
+                           </button>
+                       </div>
+                   </div>
+
+                   <!-- Core Stats Grid -->
+                   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                       <div class="stat-card p-3 rounded-lg text-center">
+                           <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Home xG</div>
+                           <div id="simHomeXg" class="text-2xl font-bold mono text-green-400">--</div>
+                       </div>
+                       <div class="stat-card p-3 rounded-lg text-center">
+                           <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Away xG</div>
+                           <div id="simAwayXg" class="text-2xl font-bold mono text-blue-400">--</div>
+                       </div>
+                       <div class="stat-card p-3 rounded-lg text-center">
+                           <div class="text-[10px] text-gray-400 uppercase tracking-wider mb-1">Expected Goals</div>
+                           <div id="simTotalXg" class="text-2xl font-bold mono text-purple-400">--</div>
+                       </div>
+                       <div class="stat-card p-3 rounded-lg text-center border-2 border-purple-500/30 bg-purple-500/10">
+                           <div class="text-[10px] text-purple-300 uppercase tracking-wider mb-1">Current Score</div>
+                           <div id="simScore" class="text-3xl font-bold mono text-white">0-0</div>
+                       </div>
+                   </div>
+
+                   <!-- Momentum Bar -->
+                   <div class="mb-6 p-4 rounded-lg bg-black/40 border border-gray-800">
+                       <div class="flex justify-between text-xs text-gray-400 mb-2">
+                           <span id="momentumHome">50%</span>
+                           <span class="font-bold text-purple-400">MOMENTUM</span>
+                           <span id="momentumAway">50%</span>
+                       </div>
+                       <div class="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                           <div id="momentumBar" class="h-full bg-gradient-to-r from-green-500 via-purple-500 to-blue-500 transition-all duration-500" style="width: 50%"></div>
+                       </div>
+                   </div>
+
+                   <!-- Manual Mode Controls -->
+                   <div id="manualControls" class="space-y-4">
+                       <!-- Modern Icon Buttons -->
+                       <div class="flex items-center justify-center gap-3">
+                           <button onclick="simulator.start()" id="btnPlay" class="sim-button w-14 h-14 rounded-full flex items-center justify-center text-white" disabled>
+                               <svg class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                   <path d="M8 5v14l11-7z"/>
+                               </svg>
+                           </button>
+                           <button onclick="simulator.pause()" id="btnPause" class="sim-button w-12 h-12 rounded-full flex items-center justify-center text-white" disabled>
+                               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                   <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                               </svg>
+                           </button>
+                           <button onclick="simulator.reset()" id="btnReset" class="sim-button w-12 h-12 rounded-full flex items-center justify-center text-white">
+                               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                               </svg>
+                           </button>
+                           <button onclick="simulator.step()" id="btnStep" class="sim-button w-12 h-12 rounded-full flex items-center justify-center text-white" disabled>
+                               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                   <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                               </svg>
+                           </button>
+                           <button onclick="simulator.fastForward()" id="btnFast" class="sim-button w-12 h-12 rounded-full flex items-center justify-center text-white" disabled>
+                               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                   <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                                   <path d="M13 6v12l8.5-6L13 6z" opacity="0.6"/>
+                               </svg>
+                           </button>
+                       </div>
+
+                       <!-- Match Timer -->
+                       <div class="text-center">
+                           <div id="matchTimer" class="inline-flex items-center gap-2 px-4 py-2 bg-black/60 rounded-full border border-gray-700">
+                               <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse" id="liveIndicator" style="display: none;"></span>
+                               <span class="text-2xl font-bold mono text-white" id="timerDisplay">0'</span>
+                           </div>
+                       </div>
+
+                       <!-- Live Events Feed -->
+                       <div id="eventsFeed" class="max-h-[120px] overflow-y-auto space-y-1 text-xs">
+                           <div class="text-gray-500 text-center py-2 italic">Match events will appear here...</div>
+                       </div>
+                   </div>
+
+                   <!-- Batch Mode Controls -->
+                   <div id="batchControls" class="hidden space-y-4">
+                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div>
+                               <label class="block text-xs text-gray-400 mb-2">Number of Simulations (Max 500)</label>
+                               <input type="number" id="batchSize" value="500" min="1" max="500" 
+                                   class="w-full input-field rounded-lg px-3 py-2 text-white text-sm mono">
+                           </div>
+                           <div>
+                               <label class="block text-xs text-gray-400 mb-2">Randomness Factor (Sweet Spot: 17%)</label>
+                               <div class="flex items-center gap-3">
+                                   <input type="range" id="randomnessSlider" min="0" max="50" value="17" 
+                                       class="flex-1" oninput="document.getElementById('randomnessValue').textContent = this.value + '%'">
+                                   <span id="randomnessValue" class="text-sm mono text-green-400 w-12 text-right">17%</span>
+                               </div>
+                               <p class="text-[10px] text-gray-500 mt-1">17% provides optimal realism vs variance balance</p>
+                           </div>
+                       </div>
+
+                       <!-- Progress Bar -->
+                       <div id="progressContainer" class="hidden">
+                           <div class="flex justify-between text-xs text-gray-400 mb-2">
+                               <span>Running Monte Carlo Simulation...</span>
+                               <span id="progressText">0/500</span>
+                           </div>
+                           <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                               <div id="progressBar" class="progress-bar h-full" style="width: 0%"></div>
+                           </div>
+                       </div>
+
+                       <button onclick="simulator.runBatch()" id="btnRunBatch" class="w-full py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white rounded-lg font-medium transition-all flex items-center justify-center gap-2">
+                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                           </svg>
+                           Run Batch Simulation
+                       </button>
+
+                       <!-- Batch Results -->
+                       <div id="batchResults" class="hidden">
+                           <div class="grid grid-cols-3 gap-3 mb-4">
+                               <div class="stat-card p-3 rounded-lg text-center border-green-500/30">
+                                   <div class="text-[10px] text-green-400 uppercase mb-1">Home Win</div>
+                                   <div id="batchHomeWin" class="text-xl font-bold mono text-white">--%</div>
+                                   <div id="batchHomeCount" class="text-[10px] text-gray-500">-- runs</div>
+                               </div>
+                               <div class="stat-card p-3 rounded-lg text-center border-gray-500/30">
+                                   <div class="text-[10px] text-gray-400 uppercase mb-1">Draw</div>
+                                   <div id="batchDraw" class="text-xl font-bold mono text-white">--%</div>
+                                   <div id="batchDrawCount" class="text-[10px] text-gray-500">-- runs</div>
+                               </div>
+                               <div class="stat-card p-3 rounded-lg text-center border-blue-500/30">
+                                   <div class="text-[10px] text-blue-400 uppercase mb-1">Away Win</div>
+                                   <div id="batchAwayWin" class="text-xl font-bold mono text-white">--%</div>
+                                   <div id="batchAwayCount" class="text-[10px] text-gray-500">-- runs</div>
+                               </div>
+                           </div>
+
+                           <!-- Distribution Bar -->
+                           <div class="p-3 rounded-lg bg-black/40 border border-gray-800">
+                               <div class="text-xs text-gray-400 mb-2">Outcome Distribution</div>
+                               <div class="w-full h-8 rounded-lg overflow-hidden flex">
+                                   <div id="distHome" class="h-full bg-green-500/80 flex items-center justify-center text-xs font-bold text-black transition-all" style="width: 33%">--</div>
+                                   <div id="distDraw" class="h-full bg-gray-500/80 flex items-center justify-center text-xs font-bold text-black transition-all" style="width: 33%">--</div>
+                                   <div id="distAway" class="h-full bg-blue-500/80 flex items-center justify-center text-xs font-bold text-black transition-all" style="width: 34%">--</div>
+                               </div>
+                               <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+                                   <span class="text-green-400">Home</span>
+                                   <span class="text-gray-400">Draw</span>
+                                   <span class="text-blue-400">Away</span>
+                               </div>
+                           </div>
+
+                           <!-- Average Stats -->
+                           <div class="grid grid-cols-3 gap-3 mt-4">
+                               <div class="text-center">
+                                   <div class="text-[10px] text-gray-500">Avg Home Goals</div>
+                                   <div id="avgHomeGoals" class="text-lg font-bold mono text-green-400">--</div>
+                               </div>
+                               <div class="text-center">
+                                   <div class="text-[10px] text-gray-500">Avg Away Goals</div>
+                                   <div id="avgAwayGoals" class="text-lg font-bold mono text-blue-400">--</div>
+                               </div>
+                               <div class="text-center">
+                                   <div class="text-[10px] text-gray-500">Avg Total xG</div>
+                                   <div id="avgTotalXg" class="text-lg font-bold mono text-purple-400">--</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+               <!-- END SIMULATOR -->
+
+           </div>
+       </div>
+   </div>
+
+   <script>
+       // ═══════════════════════════════════════════════════════════════════
+       // PASSWORD AUTHENTICATION SYSTEM
+       // ═══════════════════════════════════════════════════════════════════
+       const PasswordAuth = {
+           // SECRET mapping table (digit to 4-char code)
+           SECRET_MAP: {
+               '0': 'P2qR',
+               '1': 'xK9m',
+               '2': 'T5wH',
+               '3': 'L8vN',
+               '4': 'Z3cF',
+               '5': 'Q7bG',
+               '6': 'Y4uJ',
+               '7': 'M6aK',
+               '8': 'R9eD',
+               '9': 'W1sX'
+           },
+
+           STORAGE_KEY: 'footballStatsAuth',
+           SESSION_DURATION: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+
+           init() {
+               this.updateUTCTime();
+               setInterval(() => this.updateUTCTime(), 1000);
+               this.checkAuth();
+               this.bindEvents();
+           },
+
+           updateUTCTime() {
+               const now = new Date();
+               const hours = String(now.getUTCHours()).padStart(2, '0');
+               const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+               const timeDisplay = document.getElementById('utcTimeDisplay');
+               if (timeDisplay) {
+                   timeDisplay.textContent = `${hours}:${minutes}`;
+               }
+           },
+
+           generateCurrentPassword() {
+               const now = new Date();
+               const day = String(now.getUTCDate()).padStart(2, '0');
+               const hour = String(now.getUTCHours()).padStart(2, '0');
+               const digits = day + hour; // e.g., "2113" for March 21, 13:00 UTC
+               
+               let password = '';
+               for (let digit of digits) {
+                   password += this.SECRET_MAP[digit];
+               }
+               return password; // 16 characters (4 digits × 4 chars each)
+           },
+
+           checkAuth() {
+               const stored = localStorage.getItem(this.STORAGE_KEY);
+               
+               if (!stored) {
+                   this.showModal();
+                   return;
+               }
+
+               try {
+                   const auth = JSON.parse(stored);
+                   const now = Date.now();
+                   
+                   if (now > auth.expiresAt) {
+                       // Expired
+                       localStorage.removeItem(this.STORAGE_KEY);
+                       this.showModal();
+                   } else {
+                       // Valid
+                       this.showContent();
+                       this.updateCountdown(auth.expiresAt);
+                       this.startCountdown(auth.expiresAt);
+                   }
+               } catch (e) {
+                   localStorage.removeItem(this.STORAGE_KEY);
+                   this.showModal();
+               }
+           },
+
+           validatePassword(input) {
+               const currentPassword = this.generateCurrentPassword();
+               return input === currentPassword;
+           },
+
+           authenticate(password) {
+               if (this.validatePassword(password)) {
+                   const now = Date.now();
+                   const expiresAt = now + this.SESSION_DURATION;
+                   
+                   const authData = {
+                       loginAt: now,
+                       expiresAt: expiresAt,
+                       loginHour: new Date().getUTCHours()
+                   };
+                   
+                   localStorage.setItem(this.STORAGE_KEY, JSON.stringify(authData));
+                   
+                   this.showSuccess();
+                   setTimeout(() => {
+                       this.hideModal();
+                       this.showContent();
+                       this.updateCountdown(expiresAt);
+                       this.startCountdown(expiresAt);
+                   }, 1500);
+                   
+                   return true;
+               } else {
+                   this.showError();
+                   return false;
+               }
+           },
+
+           logout() {
+               localStorage.removeItem(this.STORAGE_KEY);
+               location.reload();
+           },
+
+           showModal() {
+               document.getElementById('passwordModal').classList.add('active');
+               document.getElementById('mainContent').style.opacity = '0';
+               document.getElementById('sessionBar').classList.remove('translate-y-0');
+               document.getElementById('sessionBar').classList.add('-translate-y-full');
+           },
+
+           hideModal() {
+               document.getElementById('passwordModal').classList.remove('active');
+           },
+
+           showContent() {
+               document.getElementById('mainContent').style.opacity = '1';
+               document.getElementById('sessionBar').classList.remove('-translate-y-full');
+               document.getElementById('sessionBar').classList.add('translate-y-0');
+           },
+
+           showError() {
+               const input = document.getElementById('passwordInput');
+               const error = document.getElementById('passwordError');
+               input.classList.add('error');
+               error.classList.remove('hidden');
+               setTimeout(() => input.classList.remove('error'), 500);
+           },
+
+           showSuccess() {
+               document.getElementById('successMessage').classList.remove('hidden');
+               document.getElementById('submitPassword').disabled = true;
+               document.getElementById('passwordInput').disabled = true;
+           },
+
+           updateCountdown(expiresAt) {
+               const now = Date.now();
+               const remaining = expiresAt - now;
+               const days = Math.ceil(remaining / (1000 * 60 * 60 * 24));
+               document.getElementById('sessionCountdown').textContent = `${days} day${days !== 1 ? 's' : ''} remaining`;
+           },
+
+           startCountdown(expiresAt) {
+               if (this.countdownInterval) clearInterval(this.countdownInterval);
+               this.countdownInterval = setInterval(() => {
+                   const now = Date.now();
+                   if (now >= expiresAt) {
+                       clearInterval(this.countdownInterval);
+                       this.logout();
+                   } else {
+                       this.updateCountdown(expiresAt);
+                   }
+               }, 60000); // Update every minute
+           },
+
+           bindEvents() {
+               const submitBtn = document.getElementById('submitPassword');
+               const input = document.getElementById('passwordInput');
+
+               submitBtn.addEventListener('click', () => {
+                   const password = input.value.trim();
+                   if (password.length === 16) {
+                       this.authenticate(password);
+                   } else {
+                       this.showError();
+                   }
+               });
+
+               input.addEventListener('keypress', (e) => {
+                   if (e.key === 'Enter') {
+                       submitBtn.click();
+                   }
+               });
+
+               input.addEventListener('input', () => {
+                   document.getElementById('passwordError').classList.add('hidden');
+               });
+           }
+       };
+
+       // Initialize auth system
+       const authSystem = PasswordAuth;
+       
+       // ═══════════════════════════════════════════════════════════════════
+       // TEAM AUTOCOMPLETE
+       // ═══════════════════════════════════════════════════════════════════
+       const FOOTBALL_TEAMS = [
+           "Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Burnley",
+           "Chelsea","Crystal Palace","Everton","Fulham","Ipswich Town","Leicester City",
+           "Liverpool","Luton Town","Manchester City","Manchester United","Newcastle United",
+           "Nottingham Forest","Sheffield United","Southampton","Tottenham Hotspur",
+           "West Ham United","Wolverhampton Wanderers","Leeds United","Sunderland",
+           "Sheffield Wednesday","Middlesbrough","Coventry City","West Bromwich Albion",
+           "Watford","Norwich City","Stoke City","Millwall","Queens Park Rangers",
+           "Bristol City","Plymouth Argyle","Swansea City","Cardiff City","Blackburn Rovers",
+           "Preston North End","Derby County","Hull City","Oxford United","Portsmouth",
+           "Real Madrid","Barcelona","Atletico Madrid","Sevilla","Real Betis",
+           "Real Sociedad","Villarreal","Athletic Club","Getafe","Celta Vigo",
+           "Osasuna","Valencia","Rayo Vallecano","Mallorca","Girona","Las Palmas",
+           "Alaves","Cadiz","Almeria","Grenada","Juventus","Inter Milan","AC Milan",
+           "Napoli","Roma","Lazio","Atalanta","Fiorentina","Bologna","Torino",
+           "Udinese","Cagliari","Verona","Genoa","Lecce","Sassuolo","Empoli",
+           "Frosinone","Salernitana","Monza","Venezia","Como","Bayern Munich",
+           "Borussia Dortmund","RB Leipzig","Bayer Leverkusen","Eintracht Frankfurt",
+           "VfL Wolfsburg","Borussia Mönchengladbach","Union Berlin","SC Freiburg",
+           "VfB Stuttgart","1. FC Köln","Hoffenheim","Werder Bremen","Mainz 05",
+           "Augsburg","Darmstadt","Heidenheim","Holstein Kiel","St Pauli",
+           "Paris Saint-Germain","Olympique de Marseille","Olympique Lyonnais","Monaco",
+           "Lille","Nice","Lens","Rennes","Montpellier","Strasbourg","Nantes","Reims",
+           "Toulouse","Brest","Lorient","Metz","Clermont Foot","Le Havre","Auxerre",
+           "Ajax","PSV Eindhoven","Feyenoord","AZ Alkmaar","Utrecht","Twente",
+           "Vitesse","Heerenveen","Groningen","Sparta Rotterdam","Porto","Benfica",
+           "Sporting CP","Braga","Vitoria Guimaraes","Boavista","Celtic","Rangers",
+           "Hearts","Hibernian","Aberdeen","Motherwell","Club Brugge","Anderlecht",
+           "Gent","Standard Liege","Antwerp","Galatasaray","Fenerbahce","Besiktas",
+           "Trabzonspor","Basaksehir","CSKA Moscow","Zenit St Petersburg",
+           "Spartak Moscow","Lokomotiv Moscow","Olympiacos","PAOK","AEK Athens",
+           "Panathinaikos","Red Bull Salzburg","Shakhtar Donetsk","Dinamo Zagreb",
+           "Young Boys","Enyimba","Kano Pillars","Plateau United","Rangers International",
+           "Sunshine Stars","Heartland","Abia Warriors","Warri Wolves","Lobi Stars",
+           "Akwa United","Rivers United","Remo Stars","Shooting Stars","Kwara United",
+           "Nasarawa United","Wikki Tourists","Gombe United","El-Kanemi Warriors",
+           "Adamawa United","Bendel Insurance","Orlando Pirates","Kaizer Chiefs",
+           "Mamelodi Sundowns","Wydad Casablanca","Al Ahly","Zamalek","ES Tunis","AS Vita Club"
+       ].filter((v, i, a) => a.indexOf(v) === i).sort();
+
+       function initTeamAutocomplete(inputId, dropdownId) {
+           const input = document.getElementById(inputId);
+           const dropdown = document.getElementById(dropdownId);
+           let activeIndex = -1;
+
+           function showDropdown(query) {
+               const q = query.toLowerCase();
+               const matches = FOOTBALL_TEAMS.filter(t => t.toLowerCase().includes(q)).slice(0, 12);
+               if (matches.length === 0) {
+                   dropdown.innerHTML = `<div class="team-dropdown-empty">No teams found for "${query}"</div>`;
+               } else {
+                   dropdown.innerHTML = matches.map((team, i) => {
+                       const idx = team.toLowerCase().indexOf(q);
+                       const before = team.slice(0, idx);
+                       const match = team.slice(idx, idx + q.length);
+                       const after = team.slice(idx + q.length);
+                       return `<div class="team-dropdown-item" data-index="${i}" data-value="${team}"
+                                   onmousedown="selectTeam('${inputId}','${dropdownId}','${team.replace(/'/g,"\\'")}')">
+                                   ${before}<span class="team-match-highlight">${match}</span>${after}
+                               </div>`;
+                   }).join('');
+               }
+               dropdown.classList.add('open');
+               activeIndex = -1;
+           }
+
+           function hideDropdown() {
+               dropdown.classList.remove('open');
+               activeIndex = -1;
+           }
+
+           input.addEventListener('input', function () {
+               const val = this.value.trim();
+               if (val.length >= 3) {
+                   showDropdown(val);
+               } else {
+                   hideDropdown();
+               }
+           });
+
+           input.addEventListener('keydown', function (e) {
+               const items = dropdown.querySelectorAll('.team-dropdown-item');
+               if (!dropdown.classList.contains('open') || items.length === 0) return;
+
+               if (e.key === 'ArrowDown') {
+                   e.preventDefault();
+                   activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                   items.forEach((it, i) => it.classList.toggle('active', i === activeIndex));
+               } else if (e.key === 'ArrowUp') {
+                   e.preventDefault();
+                   activeIndex = Math.max(activeIndex - 1, 0);
+                   items.forEach((it, i) => it.classList.toggle('active', i === activeIndex));
+               } else if (e.key === 'Enter') {
+                   e.preventDefault();
+                   if (activeIndex >= 0 && items[activeIndex]) {
+                       const val = items[activeIndex].getAttribute('data-value');
+                       selectTeam(inputId, dropdownId, val);
+                   }
+               } else if (e.key === 'Escape') {
+                   hideDropdown();
+               }
+           });
+
+           input.addEventListener('blur', function () {
+               setTimeout(() => hideDropdown(), 150);
+           });
+       }
+
+       function selectTeam(inputId, dropdownId, teamName) {
+           document.getElementById(inputId).value = teamName;
+           document.getElementById(dropdownId).classList.remove('open');
+       }
+
+       initTeamAutocomplete('homeTeam', 'homeTeamDropdown');
+       initTeamAutocomplete('awayTeam', 'awayTeamDropdown');
+
+       // ═══════════════════════════════════════════════════════════════════
+       // SLIDERS
+       // ═══════════════════════════════════════════════════════════════════
+       document.getElementById('homeAdvantage').addEventListener('input', (e) => {
+           document.getElementById('homeAdvantageVal').textContent = e.target.value;
+       });
+       document.getElementById('awayFactor').addEventListener('input', (e) => {
+           document.getElementById('awayFactorVal').textContent = e.target.value;
+       });
+
+       // ═══════════════════════════════════════════════════════════════════
+       // MATH UTILITIES
+       // ═══════════════════════════════════════════════════════════════════
+       function poisson(k, lambda) {
+           if (k < 0 || lambda <= 0) return 0;
+           return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+       }
+       
+       function factorial(n) {
+           if (n <= 1) return 1;
+           let result = 1;
+           for (let i = 2; i <= n; i++) result *= i;
+           return result;
+       }
+
+       // ═══════════════════════════════════════════════════════════════════
+               // ═══════════════════════════════════════════════════════════════════
+       // H2H FILTER SYSTEM - Base Class
+       // ═══════════════════════════════════════════════════════════════════
+       class H2HFilter {
+           constructor(prefix, colorTheme) {
+               this.prefix = prefix;
+               this.colorTheme = colorTheme;
+               this.enabled = false;
+               this.weightingMode = 'pre';
+               this.matches = [];
+               this.adjustments = {
+                   scored: 0,
+                   conceded: 0,
+                   btts: 0
+               };
+               this.dataStore = {}; // Store to persist data
+           }
+
+           toggle() {
+               this.enabled = !this.enabled;
+               const toggle = document.getElementById(`${this.prefix}H2hToggle`);
+               const status = document.getElementById(`${this.prefix}H2hStatus`);
+               const table = document.getElementById(`${this.prefix}H2hTable`);
+               const options = document.getElementById(`${this.prefix}H2hWeightingOptions`);
+               
+               if (this.enabled) {
+                   toggle.classList.add('active');
+                   status.textContent = 'ON';
+                   status.classList.add(`text-${this.colorTheme}-400`);
+                   table.classList.remove('hidden');
+                   options.classList.remove('hidden');
+                   this.initTable();
+               } else {
+                   toggle.classList.remove('active');
+                   status.textContent = 'OFF';
+                   status.classList.remove(`text-${this.colorTheme}-400`);
+                   table.classList.add('hidden');
+                   options.classList.add('hidden');
+               }
+           }
+
+           setWeighting(mode) {
+               this.weightingMode = mode;
+               document.getElementById(`${this.prefix}WeightPre`).classList.toggle('selected', mode === 'pre');
+               document.getElementById(`${this.prefix}WeightPost`).classList.toggle('selected', mode === 'post');
+           }
+
+           initTable() {
+               const tbody = document.getElementById(`${this.prefix}H2hTableBody`);
+               tbody.innerHTML = '';
+               
+               for (let i = 0; i < 5; i++) {
+                   const row = document.createElement('tr');
+                   row.className = 'h2h-table-row border-b border-gray-800';
+                   
+                   // Restore saved data if exists
+                   const savedHome = this.dataStore[`match${i}Home`] || '';
+                   const savedAway = this.dataStore[`match${i}Away`] || '';
+                   
+                   row.innerHTML = `
+                       <td class="py-2 px-2 text-gray-400">Match ${i + 1}</td>
+                       <td class="py-2 px-2 text-center">
+                           <input type="number" min="0" max="10" value="${savedHome}" 
+                               class="h2h-input ${this.prefix}-h2h-input" 
+                               data-match="${i}" data-side="home"
+                               onchange="${this.prefix}H2hFilter.updateStats()">
+                       </td>
+                       <td class="py-2 px-2 text-center text-gray-500">-</td>
+                       <td class="py-2 px-2 text-center">
+                           <input type="number" min="0" max="10" value="${savedAway}" 
+                               class="h2h-input ${this.prefix}-h2h-input" 
+                               data-match="${i}" data-side="away"
+                               onchange="${this.prefix}H2hFilter.updateStats()">
+                       </td>
+                       <td class="py-2 px-2 text-center">
+                           <span id="${this.prefix}H2hBtts${i}" class="h2h-badge btts-no">NO</span>
+                       </td>
+                   `;
+                   tbody.appendChild(row);
+               }
+               
+               this.updateStats();
+           }
+
+           updateStats() {
+               let scored = 0;
+               let conceded = 0;
+               let bttsCount = 0;
+               
+               // Save current values before updating
+               for (let i = 0; i < 5; i++) {
+                   const homeInput = document.querySelector(`#${this.prefix}H2hTableBody input[data-match="${i}"][data-side="home"]`);
+                   const awayInput = document.querySelector(`#${this.prefix}H2hTableBody input[data-match="${i}"][data-side="away"]`);
+                   
+                   if (homeInput && awayInput) {
+                       this.dataStore[`match${i}Home`] = homeInput.value;
+                       this.dataStore[`match${i}Away`] = awayInput.value;
+                       
+                       const homeGoals = parseInt(homeInput.value) || 0;
+                       const awayGoals = parseInt(awayInput.value) || 0;
+                       
+                       if (homeGoals > 0) scored++;
+                       if (awayGoals > 0) conceded++;
+                       if (homeGoals > 0 && awayGoals > 0) bttsCount++;
+                       
+                       const badge = document.getElementById(`${this.prefix}H2hBtts${i}`);
+                       if (homeGoals > 0 && awayGoals > 0) {
+                           badge.textContent = 'YES';
+                           badge.className = 'h2h-badge btts-yes';
+                       } else {
+                           badge.textContent = 'NO';
+                           badge.className = 'h2h-badge btts-no';
+                       }
+                   }
+               }
+               
+               document.getElementById(`${this.prefix}H2hScored`).textContent = `${scored}/5`;
+               document.getElementById(`${this.prefix}H2hScored`).nextElementSibling.textContent = `${(scored/5*100).toFixed(0)}%`;
+               
+               document.getElementById(`${this.prefix}H2hConceded`).textContent = `${conceded}/5`;
+               document.getElementById(`${this.prefix}H2hConceded`).nextElementSibling.textContent = `${(conceded/5*100).toFixed(0)}%`;
+               
+               document.getElementById(`${this.prefix}H2hBttsFreq`).textContent = `${bttsCount}/5`;
+               document.getElementById(`${this.prefix}H2hBttsFreq`).nextElementSibling.textContent = `${(bttsCount/5*100).toFixed(0)}%`;
+               
+               this.adjustments.scored = (scored / 5) - 0.5;
+               this.adjustments.conceded = (conceded / 5) - 0.5;
+               this.adjustments.btts = (bttsCount / 5) - 0.5;
+               
+               const impactDiv = document.getElementById(`${this.prefix}H2hImpact`);
+               const impactText = document.getElementById(`${this.prefix}H2hImpactText`);
+               if (this.enabled) {
+                   impactDiv.classList.remove('hidden');
+                   const sign = this.adjustments.scored >= 0 ? '+' : '';
+                   impactText.textContent = `Attack strength adjusted by ${sign}${(this.adjustments.scored * 20).toFixed(1)}% based on H2H history`;
+               }
+           }
+
+           getAttackAdjustment() {
+               if (!this.enabled) return 0;
+               return this.adjustments.scored * 0.2;
+           }
+
+           getDefenseAdjustment() {
+               if (!this.enabled) return 0;
+               return this.adjustments.conceded * 0.2;
+           }
+
+           getBttsAdjustment() {
+               if (!this.enabled) return 0;
+               return this.adjustments.btts * 0.2;
+           }
+
+           applyToProbabilities(probs) {
+               if (!this.enabled || this.weightingMode !== 'pre') return probs;
+               
+               const bttsAdj = this.getBttsAdjustment();
+               const newBtts = Math.max(0, Math.min(100, probs.btts + (bttsAdj * 100)));
+               
+               return {
+                   ...probs,
+                   btts: newBtts,
+                   bttsAdjusted: true,
+                   adjustmentFactor: bttsAdj
+               };
+           }
+
+           applyPostAdjustment(results) {
+               if (!this.enabled || this.weightingMode !== 'post') return results;
+               
+               const bttsAdj = this.getBttsAdjustment();
+               return {
+                   ...results,
+                   bttsAdjustment: bttsAdj,
+                   note: 'H2H post-adjustment applied'
+               };
+           }
+       }
+
+       // Initialize separate H2H filters for Home and Away
+       const homeH2hFilter = new H2HFilter('home', 'green');
+       const awayH2hFilter = new H2HFilter('away', 'blue');
+
+       // ═══════════════════════════════════════════════════════════════════
+       // MAIN CALCULATION
+       // ═══════════════════════════════════════════════════════════════════
+       let calculatedData = null;
+
+       function calculateSharp() {
+           const homeTeam = document.getElementById('homeTeam').value || 'Home';
+           const awayTeam = document.getElementById('awayTeam').value || 'Away';
+           const leagueAvg = parseFloat(document.getElementById('leagueAvgXg').value) || 1.35;
+           
+           const homeSeasonAtt = parseFloat(document.getElementById('homeSeasonAttack').value) || 0;
+           const homeSeasonDef = parseFloat(document.getElementById('homeSeasonDefense').value) || 0;
+           const homeLast5Att = parseFloat(document.getElementById('homeLast5Attack').value) || 0;
+           const homeLast5Def = parseFloat(document.getElementById('homeLast5Defense').value) || 0;
+           const homeTrend = document.getElementById('homeTrend').value;
+           const homeOpp = parseFloat(document.getElementById('homeOppStrength').value);
+           const homeAdv = parseFloat(document.getElementById('homeAdvantage').value);
+           
+           const awaySeasonAtt = parseFloat(document.getElementById('awaySeasonAttack').value) || 0;
+           const awaySeasonDef = parseFloat(document.getElementById('awaySeasonDefense').value) || 0;
+           const awayLast5Att = parseFloat(document.getElementById('awayLast5Attack').value) || 0;
+           const awayLast5Def = parseFloat(document.getElementById('awayLast5Defense').value) || 0;
+           const awayTrend = document.getElementById('awayTrend').value;
+           const awayOpp = parseFloat(document.getElementById('awayOppStrength').value);
+           const awayFac = parseFloat(document.getElementById('awayFactor').value);
+           
+           const trendMultipliers = {
+               'improving': 1.15,
+               'stable': 1.0,
+               'declining': 0.85
+           };
+           
+           // Apply H2H adjustments to form data
+           const homeAttackAdj = homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'pre' ? 
+               1 + homeH2hFilter.getAttackAdjustment() : 1;
+           const homeDefenseAdj = homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'pre' ? 
+               1 + homeH2hFilter.getDefenseAdjustment() : 1;
+           
+           const awayAttackAdj = awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'pre' ? 
+               1 + awayH2hFilter.getAttackAdjustment() : 1;
+           const awayDefenseAdj = awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'pre' ? 
+               1 + awayH2hFilter.getDefenseAdjustment() : 1;
+           
+           const homeTrendMult = trendMultipliers[homeTrend];
+           const homeLast5Adj = homeLast5Att * homeTrendMult * (1/homeOpp) * homeAttackAdj;
+           const homeFinalAtt = (homeSeasonAtt * 0.4) + (homeLast5Adj * 0.6);
+           
+           const homeDefTrendMult = trendMultipliers[homeTrend === 'improving' ? 'declining' : homeTrend === 'declining' ? 'improving' : 'stable'];
+           const homeLast5DefAdj = homeLast5Def * homeDefTrendMult * homeOpp * homeDefenseAdj;
+           const homeFinalDef = (homeSeasonDef * 0.4) + (homeLast5DefAdj * 0.6);
+           
+           const awayTrendMult = trendMultipliers[awayTrend];
+           const awayLast5Adj = awayLast5Att * awayTrendMult * (1/awayOpp) * awayAttackAdj;
+           const awayFinalAtt = ((awaySeasonAtt * 0.4) + (awayLast5Adj * 0.6)) * awayFac;
+           
+           const awayDefTrendMult = trendMultipliers[awayTrend === 'improving' ? 'declining' : awayTrend === 'declining' ? 'improving' : 'stable'];
+           const awayLast5DefAdj = awayLast5Def * awayDefTrendMult * awayOpp * awayDefenseAdj;
+           const awayFinalDef = (awaySeasonDef * 0.4) + (awayLast5DefAdj * 0.6);
+           
+           const homeXg = homeFinalAtt * (awayFinalDef / leagueAvg) * homeAdv;
+           const awayXg = awayFinalAtt * (homeFinalDef / leagueAvg);
+           
+           document.getElementById('modelInfo').classList.remove('hidden');
+           document.getElementById('homeCalcDetail').innerHTML = `
+               <div>Season Attack: ${homeSeasonAtt.toFixed(2)} × 0.4 = ${(homeSeasonAtt*0.4).toFixed(2)}</div>
+               <div>Last5 Adjusted: ${homeLast5Att.toFixed(2)} × ${homeTrendMult} × ${(1/homeOpp).toFixed(2)} × ${homeAttackAdj.toFixed(2)}(H2H) = ${homeLast5Adj.toFixed(2)}</div>
+               <div>Last5 Weighted: ${homeLast5Adj.toFixed(2)} × 0.6 = ${(homeLast5Adj*0.6).toFixed(2)}</div>
+               <div class="text-green-400">Final Attack: ${homeFinalAtt.toFixed(2)} × ${homeAdv} (H) = ${(homeFinalAtt*homeAdv).toFixed(2)}</div>
+               ${homeH2hFilter.enabled ? `<div class="text-green-400 text-xs mt-1">H2H Attack Adj: ${homeAttackAdj > 1 ? '+' : ''}${((homeAttackAdj-1)*100).toFixed(0)}%</div>` : ''}
+           `;
+           document.getElementById('awayCalcDetail').innerHTML = `
+               <div>Season Attack: ${awaySeasonAtt.toFixed(2)} × 0.4 = ${(awaySeasonAtt*0.4).toFixed(2)}</div>
+               <div>Last5 Adjusted: ${awayLast5Att.toFixed(2)} × ${awayTrendMult} × ${(1/awayOpp).toFixed(2)} × ${awayAttackAdj.toFixed(2)}(H2H) = ${awayLast5Adj.toFixed(2)}</div>
+               <div>Last5 Weighted: ${awayLast5Adj.toFixed(2)} × 0.6 = ${(awayLast5Adj*0.6).toFixed(2)}</div>
+               <div class="text-blue-400">Final Attack: ${awayFinalAtt.toFixed(2)} × ${awayFac} (A) = ${awayFinalAtt.toFixed(2)}</div>
+               ${awayH2hFilter.enabled ? `<div class="text-blue-400 text-xs mt-1">H2H Attack Adj: ${awayAttackAdj > 1 ? '+' : ''}${((awayAttackAdj-1)*100).toFixed(0)}%</div>` : ''}
+           `;
+           
+           document.getElementById('finalHomeXg').textContent = homeXg.toFixed(2);
+           document.getElementById('finalAwayXg').textContent = awayXg.toFixed(2);
+           document.getElementById('displayHomeTeam').textContent = homeTeam;
+           document.getElementById('displayAwayTeam').textContent = awayTeam;
+           document.getElementById('totalXg').textContent = `Total: ${(homeXg + awayXg).toFixed(2)}`;
+           
+           const totalXg = homeXg + awayXg;
+           document.getElementById('xgBarHome').style.width = `${(homeXg/totalXg)*100}%`;
+           document.getElementById('xgBarAway').style.width = `${(awayXg/totalXg)*100}%`;
+           document.getElementById('homeXgBreakdown').textContent = `Quality: ${(homeSeasonAtt*0.4).toFixed(1)} + Form: ${(homeLast5Adj*0.6).toFixed(1)}`;
+           document.getElementById('awayXgBreakdown').textContent = `Quality: ${(awaySeasonAtt*0.4).toFixed(1)} + Form: ${(awayLast5Adj*0.6).toFixed(1)}`;
+           
+           let probs = calculateProbs(homeXg, awayXg);
+           
+           // Apply H2H pre-simulation weighting if enabled
+           probs = homeH2hFilter.applyToProbabilities(probs);
+           probs = awayH2hFilter.applyToProbabilities(probs);
+           
+           const odds = {
+               home: parseFloat(document.getElementById('odds1').value) || 0,
+               draw: parseFloat(document.getElementById('oddsX').value) || 0,
+               away: parseFloat(document.getElementById('odds2').value) || 0,
+               over: parseFloat(document.getElementById('oddsOver').value) || 0,
+               under: parseFloat(document.getElementById('oddsUnder').value) || 0,
+               bttsY: parseFloat(document.getElementById('oddsBttsY').value) || 0,
+               bttsN: parseFloat(document.getElementById('oddsBttsN').value) || 0
+           };
+
+           const bankrollRaw = document.getElementById('bankroll').value;
+           const bankroll = bankrollRaw !== '' ? Math.max(0, parseFloat(bankrollRaw) || 0) : 0;
+           const kelly = parseFloat(document.getElementById('kellyFrac').value) || 0.25;
+           const stakeThreshold = bankroll > 0 ? Math.max(1, bankroll * 0.01) : Infinity;
+           
+           const markets = [
+               {name: 'Home Win', prob: probs.home, odds: odds.home, type: '1X2'},
+               {name: 'Draw', prob: probs.draw, odds: odds.draw, type: '1X2'},
+               {name: 'Away Win', prob: probs.away, odds: odds.away, type: '1X2'},
+               {name: 'Over 2.5', prob: probs.over25, odds: odds.over, type: 'OU'},
+               {name: 'Under 2.5', prob: probs.under25, odds: odds.under, type: 'OU'},
+               {name: 'BTTS Yes', prob: probs.btts, odds: odds.bttsY, type: 'BTTS', adjusted: probs.bttsAdjusted},
+               {name: 'BTTS No', prob: 100-probs.btts, odds: odds.bttsN, type: 'BTTS', adjusted: probs.bttsAdjusted}
+           ];
+           
+           markets.forEach(m => {
+               m.ev = m.odds > 1 ? (m.prob * m.odds) - 100 : -100;
+               if (m.ev > 0 && m.odds > 1 && bankroll > 0) {
+                   const b = m.odds - 1;
+                   const p = m.prob / 100;
+                   const kellyStake = ((b * p) - (1-p)) / b * kelly * bankroll;
+                   m.stake = Math.max(0, kellyStake);
+               } else {
+                   m.stake = 0;
+               }
+           });
+           
+           let marketsHtml = '';
+           markets.forEach(m => {
+               if (m.odds <= 1) return;
+               const valueClass = m.ev >= 10 ? 'value-high' : m.ev >= 5 ? 'value-med' : m.ev >= 2 ? 'value-low' : 'value-none';
+               const evColor = m.ev >= 10 ? 'text-green-400' : m.ev >= 5 ? 'text-blue-400' : m.ev >= 2 ? 'text-yellow-400' : 'text-gray-500';
+               const adjustedBadge = m.adjusted ? '<span class="text-[10px] text-orange-400 ml-1">H2H</span>' : '';
+               
+               marketsHtml += `
+                   <div class="p-3 rounded-lg border ${valueClass}">
+                       <div class="flex items-center justify-between mb-1">
+                           <span class="text-xs text-gray-400">${m.name}${adjustedBadge}</span>
+                           ${m.ev >= 2 ? '<span class="text-[10px] bg-green-500/20 text-green-400 px-1.5 rounded">VALUE</span>' : ''}
+                       </div>
+                       <div class="text-lg font-bold text-white">${m.prob.toFixed(1)}%</div>
+                       <div class="flex items-center justify-between text-xs">
+                           <span class="mono text-gray-400">@ ${m.odds.toFixed(2)}</span>
+                           <span class="${evColor} font-bold">${m.ev > 0 ? '+' : ''}${m.ev.toFixed(1)}%</span>
+                       </div>
+                       ${m.stake > stakeThreshold ? `<div class="text-xs text-green-400 mt-1">Stake: ₦${Math.round(m.stake).toLocaleString()}</div>` : ''}
+                   </div>
+               `;
+           });
+           document.getElementById('allMarkets').innerHTML = marketsHtml || '<div class="col-span-4 text-center text-gray-500 py-4">Enter odds to see analysis</div>';
+           
+           const valueBets = markets.filter(m => m.ev >= 2).sort((a,b) => b.ev - a.ev);
+           if (valueBets.length > 0) {
+               document.getElementById('valueSection').classList.remove('hidden');
+               let vbHtml = '';
+               valueBets.forEach(m => {
+                   const adjustedBadge = m.adjusted ? '<span class="text-xs text-orange-400 ml-2">H2H Adjusted</span>' : '';
+                   vbHtml += `
+                       <div class="p-4 rounded-xl bg-gradient-to-br from-green-900/40 to-black border border-green-500/40">
+                           <div class="text-xs text-green-400 mb-1">${m.type}${adjustedBadge}</div>
+                           <div class="text-xl font-bold text-white mb-2">${m.name}</div>
+                           <div class="flex items-center justify-between">
+                               <span class="text-2xl font-bold mono text-green-400">@${m.odds.toFixed(2)}</span>
+                               <span class="px-2 py-1 rounded bg-green-500 text-black text-xs font-bold">+${m.ev.toFixed(1)}% EV</span>
+                           </div>
+                           ${m.stake > stakeThreshold ? `<div class="mt-2 text-sm text-green-300">Stake: ₦${Math.round(m.stake).toLocaleString()}</div>` : ''}
+                       </div>
+                   `;
+               });
+               document.getElementById('valueBetsGrid').innerHTML = vbHtml;
+           } else {
+               document.getElementById('valueSection').classList.add('hidden');
+           }
+           
+           let scoreHtml = '';
+           for (let h = 0; h <= 4; h++) {
+               for (let a = 0; a <= 4; a++) {
+                   const prob = poisson(h, homeXg) * poisson(a, awayXg) * 100;
+                   let colorClass = 'bg-gray-800 text-gray-500';
+                   if (prob > 8) colorClass = 'bg-green-500/40 text-white font-bold';
+                   else if (prob > 4) colorClass = 'bg-green-500/20 text-green-200';
+                   else if (prob > 2) colorClass = 'bg-blue-500/20 text-blue-200';
+                   
+                   scoreHtml += `<div class="aspect-square flex flex-col items-center justify-center rounded ${colorClass} text-xs border border-gray-700">
+                       <span class="font-bold">${h}-${a}</span>
+                       <span class="text-[9px]">${prob.toFixed(1)}%</span>
+                   </div>`;
+               }
+           }
+           document.getElementById('scoreGrid').innerHTML = scoreHtml;
+
+           // Store data for simulator
+           calculatedData = {
+               homeXg, awayXg, homeTeam, awayTeam, probs
+           };
+
+           // Activate Simulator
+           simulator.loadData(homeXg, awayXg, homeTeam, awayTeam);
+           document.getElementById('simulatorContainer').classList.remove('hidden');
+       }
+
+       function calculateProbs(homeXg, awayXg) {
+           let home = 0, draw = 0, away = 0, over25 = 0, btts = 0;
+           
+           for (let h = 0; h <= 6; h++) {
+               for (let a = 0; a <= 6; a++) {
+                   const p = poisson(h, homeXg) * poisson(a, awayXg);
+                   if (h > a) home += p;
+                   else if (h === a) draw += p;
+                   else away += p;
+                   
+                   if (h + a > 2.5) over25 += p;
+                   if (h > 0 && a > 0) btts += p;
+               }
+           }
+           
+           return {
+               home: home * 100,
+               draw: draw * 100,
+               away: away * 100,
+               over25: over25 * 100,
+               under25: (1 - over25) * 100,
+               btts: btts * 100
+           };
+       }
+
+       // ═══════════════════════════════════════════════════════════════════
+       // OPTIMIZED MATCH SIMULATOR
+       // ═══════════════════════════════════════════════════════════════════
+       class MatchSimulator {
+           constructor() {
+               this.data = null;
+               this.mode = 'manual';
+               this.state = {
+                   isPlaying: false,
+                   currentMinute: 0,
+                   score: { home: 0, away: 0 },
+                   momentum: 50,
+                   events: []
+               };
+               this.interval = null;
+               this.batchRunning = false;
+           }
+
+           loadData(homeXg, awayXg, homeTeam, awayTeam) {
+               this.data = { homeXg, awayXg, homeTeam, awayTeam };
+               
+               document.getElementById('simHomeXg').textContent = homeXg.toFixed(2);
+               document.getElementById('simAwayXg').textContent = awayXg.toFixed(2);
+               document.getElementById('simTotalXg').textContent = (homeXg + awayXg).toFixed(2);
+               
+               document.getElementById('btnPlay').disabled = false;
+               document.getElementById('btnStep').disabled = false;
+               document.getElementById('btnFast').disabled = false;
+               document.getElementById('btnRunBatch').disabled = false;
+               
+               this.reset();
+           }
+
+           setMode(mode) {
+               this.mode = mode;
+               document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+               document.getElementById('modeBatch').classList.toggle('active', mode === 'batch');
+               document.getElementById('manualControls').classList.toggle('hidden', mode !== 'manual');
+               document.getElementById('batchControls').classList.toggle('hidden', mode !== 'batch');
+               
+               if (mode === 'batch') {
+                   this.pause();
+               }
+           }
+
+           reset() {
+               this.pause();
+               this.state.currentMinute = 0;
+               this.state.score = { home: 0, away: 0 };
+               this.state.momentum = 50;
+               this.state.events = [];
+               
+               this.updateDisplay();
+               this.updateEvents();
+               document.getElementById('liveIndicator').style.display = 'none';
+           }
+
+           start() {
+               if (!this.data || this.state.isPlaying) return;
+               this.state.isPlaying = true;
+               document.getElementById('liveIndicator').style.display = 'inline-block';
+               document.getElementById('btnPlay').disabled = true;
+               document.getElementById('btnPause').disabled = false;
+               
+               this.interval = setInterval(() => this.step(), 500);
+           }
+
+           pause() {
+               this.state.isPlaying = false;
+               clearInterval(this.interval);
+               document.getElementById('liveIndicator').style.display = 'none';
+               document.getElementById('btnPlay').disabled = false;
+               document.getElementById('btnPause').disabled = true;
+           }
+
+           step() {
+               if (this.state.currentMinute >= 90) {
+                   this.pause();
+                   this.addEvent('end', null, `Full Time: ${this.state.score.home}-${this.state.score.away}`);
+                   return;
+               }
+
+               this.state.currentMinute++;
+               
+               let homeLambda = this.data.homeXg / 90;
+               let awayLambda = this.data.awayXg / 90;
+               
+               // Apply H2H adjustments in simulation
+               if (homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'pre') {
+                   homeLambda *= (1 + homeH2hFilter.getAttackAdjustment());
+               }
+               if (awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'pre') {
+                   awayLambda *= (1 + awayH2hFilter.getAttackAdjustment());
+               }
+               
+               const rand = Math.random();
+               const chaos = 1 + (Math.random() - 0.5) * 0.34;
+               
+               if (rand < homeLambda * chaos) {
+                   this.scoreGoal('home');
+               } else if (rand < (homeLambda + awayLambda) * chaos) {
+                   this.scoreGoal('away');
+               } else if (rand < (homeLambda + awayLambda + 0.05) * chaos) {
+                   this.addEvent('shot', Math.random() < 0.5 ? 'home' : 'away', 'Shot on target saved');
+               }
+               
+               const shift = (Math.random() - 0.5) * 10;
+               this.state.momentum = Math.max(20, Math.min(80, this.state.momentum + shift));
+               
+               this.updateDisplay();
+           }
+
+           fastForward() {
+               while (this.state.currentMinute < 90) {
+                   this.step();
+               }
+           }
+
+           scoreGoal(team) {
+               this.state.score[team]++;
+               const teamName = team === 'home' ? this.data.homeTeam : this.data.awayTeam;
+               this.addEvent('goal', team, `⚽ GOAL! ${teamName} scores`);
+               
+               this.state.momentum = team === 'home' ? 
+                   Math.min(80, this.state.momentum + 15) : 
+                   Math.max(20, this.state.momentum - 15);
+           }
+
+           addEvent(type, team, text) {
+               const event = {
+                   minute: this.state.currentMinute,
+                   type,
+                   team,
+                   text
+               };
+               this.state.events.unshift(event);
+               if (this.state.events.length > 10) this.state.events.pop();
+               this.updateEvents();
+           }
+
+           updateDisplay() {
+               document.getElementById('timerDisplay').textContent = `${this.state.currentMinute}'`;
+               document.getElementById('simScore').textContent = `${this.state.score.home}-${this.state.score.away}`;
+               
+               const momBar = document.getElementById('momentumBar');
+               momBar.style.width = `${this.state.momentum}%`;
+               document.getElementById('momentumHome').textContent = `${this.state.momentum.toFixed(0)}%`;
+               document.getElementById('momentumAway').textContent = `${(100 - this.state.momentum).toFixed(0)}%`;
+           }
+
+           updateEvents() {
+               const container = document.getElementById('eventsFeed');
+               if (this.state.events.length === 0) {
+                   container.innerHTML = '<div class="text-gray-500 text-center py-2 italic">Match events will appear here...</div>';
+                   return;
+               }
+               
+               container.innerHTML = this.state.events.map(e => {
+                   const color = e.team === 'home' ? 'text-green-400 border-green-500/30' : 
+                                e.team === 'away' ? 'text-blue-400 border-blue-500/30' : 
+                                'text-gray-400 border-gray-500/30';
+                   return `
+                       <div class="flex items-center gap-2 p-2 rounded bg-black/40 border-l-2 ${color}">
+                           <span class="font-bold mono text-xs w-8">${e.minute}'</span>
+                           <span class="text-xs">${e.text}</span>
+                       </div>
+                   `;
+               }).join('');
+           }
+
+           async runBatch() {
+               if (!this.data || this.batchRunning) return;
+               
+               const count = Math.min(500, Math.max(1, parseInt(document.getElementById('batchSize').value) || 500));
+               const randomness = parseInt(document.getElementById('randomnessSlider').value) / 100;
+               
+               this.batchRunning = true;
+               document.getElementById('btnRunBatch').disabled = true;
+               document.getElementById('progressContainer').classList.remove('hidden');
+               document.getElementById('batchResults').classList.add('hidden');
+               
+               const results = {
+                   homeWins: 0,
+                   draws: 0,
+                   awayWins: 0,
+                   totalHomeGoals: 0,
+                   totalAwayGoals: 0,
+                   totalHomeXg: 0,
+                   totalAwayXg: 0,
+                   bttsCount: 0
+               };
+
+               const chunkSize = 10;
+               for (let i = 0; i < count; i += chunkSize) {
+                   const chunk = Math.min(chunkSize, count - i);
+                   
+                   for (let j = 0; j < chunk; j++) {
+                       const sim = this.simulateOne(randomness);
+                       if (sim.home > sim.away) results.homeWins++;
+                       else if (sim.home === sim.away) results.draws++;
+                       else results.awayWins++;
+                       
+                       results.totalHomeGoals += sim.home;
+                       results.totalAwayGoals += sim.away;
+                       results.totalHomeXg += sim.homeXg;
+                       results.totalAwayXg += sim.awayXg;
+                       if (sim.home > 0 && sim.away > 0) results.bttsCount++;
+                   }
+                   
+                   const progress = ((i + chunk) / count) * 100;
+                   document.getElementById('progressBar').style.width = `${progress}%`;
+                   document.getElementById('progressText').textContent = `${Math.min(i + chunk, count)}/${count}`;
+                   
+                   await new Promise(r => setTimeout(r, 10));
+               }
+               
+               const finalResults = homeH2hFilter.applyPostAdjustment(results);
+               this.displayBatchResults(finalResults, count);
+               this.batchRunning = false;
+               document.getElementById('btnRunBatch').disabled = false;
+           }
+
+           simulateOne(randomness) {
+               let homeLambda = this.data.homeXg;
+               let awayLambda = this.data.awayXg;
+               
+               // Apply H2H adjustments
+               if (homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'pre') {
+                   homeLambda *= (1 + homeH2hFilter.getAttackAdjustment());
+               }
+               if (awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'pre') {
+                   awayLambda *= (1 + awayH2hFilter.getAttackAdjustment());
+               }
+               
+               const chaos = 1 + (Math.random() - 0.5) * randomness * 2;
+               
+               let homeGoals = 0;
+               let awayGoals = 0;
+               
+               for (let min = 0; min < 90; min++) {
+                   if (Math.random() < (homeLambda / 90) * chaos) homeGoals++;
+                   if (Math.random() < (awayLambda / 90) * chaos) awayGoals++;
+               }
+               
+               return {
+                   home: homeGoals,
+                   away: awayGoals,
+                   homeXg: homeLambda * chaos,
+                   awayXg: awayLambda * chaos
+               };
+           }
+
+           displayBatchResults(results, total) {
+               document.getElementById('progressContainer').classList.add('hidden');
+               document.getElementById('batchResults').classList.remove('hidden');
+               
+               const homePct = (results.homeWins / total * 100).toFixed(1);
+               const drawPct = (results.draws / total * 100).toFixed(1);
+               const awayPct = (results.awayWins / total * 100).toFixed(1);
+               const bttsPct = (results.bttsCount / total * 100).toFixed(1);
+               
+               let adjustedBtts = bttsPct;
+               if ((homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'post') || 
+                   (awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'post')) {
+                   const adj = (homeH2hFilter.getBttsAdjustment() + awayH2hFilter.getBttsAdjustment()) * 100;
+                   adjustedBtts = Math.max(0, Math.min(100, parseFloat(bttsPct) + adj)).toFixed(1);
+               }
+               
+               document.getElementById('batchHomeWin').textContent = `${homePct}%`;
+               document.getElementById('batchDraw').textContent = `${drawPct}%`;
+               document.getElementById('batchAwayWin').textContent = `${awayPct}%`;
+               
+               document.getElementById('batchHomeCount').textContent = `${results.homeWins} runs`;
+               document.getElementById('batchDrawCount').textContent = `${results.draws} runs`;
+               document.getElementById('batchAwayCount').textContent = `${results.awayWins} runs`;
+               
+               document.getElementById('distHome').style.width = `${homePct}%`;
+               document.getElementById('distHome').textContent = homePct > 8 ? `${homePct}%` : '';
+               document.getElementById('distDraw').style.width = `${drawPct}%`;
+               document.getElementById('distDraw').textContent = drawPct > 8 ? `${drawPct}%` : '';
+               document.getElementById('distAway').style.width = `${awayPct}%`;
+               document.getElementById('distAway').textContent = awayPct > 8 ? `${awayPct}%` : '';
+               
+               document.getElementById('avgHomeGoals').textContent = (results.totalHomeGoals / total).toFixed(2);
+               document.getElementById('avgAwayGoals').textContent = (results.totalAwayGoals / total).toFixed(2);
+               document.getElementById('avgTotalXg').textContent = ((results.totalHomeXg + results.totalAwayXg) / total).toFixed(2);
+               
+               // Add H2H adjustment note if applicable
+               if ((homeH2hFilter.enabled && homeH2hFilter.weightingMode === 'post') || 
+                   (awayH2hFilter.enabled && awayH2hFilter.weightingMode === 'post')) {
+                   const adj = (homeH2hFilter.getBttsAdjustment() + awayH2hFilter.getBttsAdjustment()) * 100;
+                   const sign = adj >= 0 ? '+' : '';
+                   const bttsNote = document.createElement('div');
+                   bttsNote.className = 'mt-3 p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-xs text-blue-200';
+                   bttsNote.innerHTML = `
+                       <div class="flex items-center gap-2">
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                           </svg>
+                           <span>Raw BTTS: ${bttsPct}% | H2H Adjusted: ${adjustedBtts}% (${sign}${adj.toFixed(1)}%)</span>
+                       </div>
+                   `;
+                   const batchResults = document.getElementById('batchResults');
+                   const existingNote = batchResults.querySelector('.bg-blue-500\\/10');
+                   if (existingNote) existingNote.remove();
+                   batchResults.appendChild(bttsNote);
+               }
+           }
+       }
+
+       const simulator = new MatchSimulator();
+
+       // Initialize auth system on load
+       document.addEventListener('DOMContentLoaded', () => {
+           authSystem.init();
+       });
+   </script>
+</body>
+</html>
