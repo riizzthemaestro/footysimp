@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Football Stats Predictor - Strategy Enhanced</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+        body{background:#0d1117;color:#c9d1d9;padding:10px;line-height:1.5}
+        .container{max-width:800px;margin:0 auto}
+        h1{text-align:center;color:#58a6ff;margin-bottom:20px;font-size:1.5rem}
+        .card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:15px;margin-bottom:15px;position:relative;overflow:hidden}
+        .card-title{font-size:0.9rem;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+        .card-title:hover{color:#c9d1d9}
+        .collapse-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#8b949e;font-size:12px;cursor:pointer;transition:all 0.2s}
+        .collapse-btn:hover{background:#30363d;color:#c9d1d9}
+        .collapse-btn.collapsed{transform:rotate(-90deg)}
+        .card-content{transition:max-height 0.3s ease-out,opacity 0.3s ease-out;max-height:2000px;opacity:1;overflow:hidden}
+        .card-content.collapsed{max-height:0;opacity:0}
+        .teams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:15px}
+        .team-input{width:100%;padding:10px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:0.9rem;text-align:center}
+        .vs{color:#8b949e;font-weight:bold}
+        .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .stat-box{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px;text-align:center}
+        .stat-label{font-size:0.7rem;color:#8b949e;text-transform:uppercase;margin-bottom:5px}
+        .stat-input{width:100%;padding:8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;text-align:center;font-size:0.9rem}
+        .stat-input:focus{outline:none;border-color:#58a6ff}
+        .team-header{text-align:center;font-size:0.8rem;color:#58a6ff;margin-bottom:10px;font-weight:bold}
+        .btn{width:100%;padding:12px;background:#238636;border:none;border-radius:6px;color:#fff;font-size:1rem;font-weight:bold;cursor:pointer;margin-top:10px}
+        .btn:hover{background:#2ea043}
+        .btn-clear{background:#da3633}
+        .btn-clear:hover{background:#f85149}
+        .btn-small{padding:6px 12px;font-size:0.75rem;margin-top:0}
+        .btn-disagree{background:#6e7681}
+        .btn-disagree:hover{background:#8b949e}
+        .btn-backtest{background:#a371f7}
+        .btn-backtest:hover{background:#bc8cff}
+        .result-card{display:none}
+        .prediction-box{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:15px;margin-bottom:15px}
+        .prediction-main{display:flex;justify-content:space-between;align-items:center}
+        .prediction-type{font-size:1.1rem;color:#a371f7;font-weight:bold}
+        .prediction-odds{font-size:1.5rem;color:#3fb950;font-weight:bold}
+        .confidence-bar{height:6px;background:#21262d;border-radius:3px;margin-top:10px;overflow:hidden}
+        .confidence-fill{height:100%;border-radius:3px;transition:width 0.3s}
+        .stats-table{width:100%;border-collapse:collapse;margin-top:15px;font-size:0.85rem}
+        .stats-table th,.stats-table td{padding:8px;text-align:center;border-bottom:1px solid #21262d}
+        .stats-table th{color:#8b949e;font-weight:normal}
+        .stats-table td{color:#c9d1d9}
+        .home-stat{color:#58a6ff}
+        .away-stat{color:#f85149}
+        .value-tag{display:inline-block;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:bold}
+        .row{display:flex;gap:10px}
+        .col{flex:1}
+        .history-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px;margin-bottom:8px;font-size:0.8rem;position:relative;overflow:hidden}
+        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .history-teams{font-weight:bold;color:#fff}
+        .history-date{color:#8b949e;font-size:0.7rem}
+        .history-pred{color:#d2a8ff;font-weight:bold}
+        .history-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center}
+        .status-btn{padding:4px 10px;border:none;border-radius:4px;font-size:0.7rem;cursor:pointer}
+        .status-won-btn{background:rgba(63,185,80,0.3);color:#3fb950;border:1px solid #3fb950}
+        .status-lost-btn{background:rgba(218,54,51,0.3);color:#f85149;border:1px solid #f85149}
+        .delete-btn{background:transparent;color:#8b949e;border:1px solid #30363d;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.7rem}
+        .delete-btn:hover{color:#f85149;border-color:#f85149}
+        .stats-summary{display:flex;gap:15px;margin-bottom:15px;font-size:0.8rem;flex-wrap:wrap}
+        .stat-pill{background:#21262d;padding:6px 12px;border-radius:20px}
+        .stat-pill span{color:#3fb950;font-weight:bold}
+        .widget-container{border-radius:8px;overflow:hidden;border:1px solid #30363d;background:#0d1117}
+        .widget-header{display:flex;align-items:center;gap:8px;padding:10px 15px;background:#161b22;border-bottom:1px solid #30363d}
+        .live-dot{width:8px;height:8px;background:#3fb950;border-radius:50%;animation:pulse 1s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        iframe{width:100%;height:400px;border:none;background:#0d1117}
+        @media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr)}.row{flex-direction:column}iframe{height:350px}}
+        .prob-high{color:#3fb950!important;font-weight:bold}
+        .prob-medium{color:#d29922!important;font-weight:bold}
+        .prob-low{color:#f85149!important;font-weight:bold}
+        .conf-high{background:linear-gradient(90deg,#238636,#3fb950)!important}
+        .conf-medium{background:linear-gradient(90deg,#d29922,#f0883e)!important}
+        .conf-low{background:linear-gradient(90deg,#da3633,#f85149)!important}
+        .watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:4rem;font-weight:bold;text-transform:uppercase;opacity:0.15;pointer-events:none;z-index:10;white-space:nowrap}
+        .watermark-pending{color:#8b949e}
+        .watermark-won{color:#3fb950}
+        .watermark-lost{color:#f85149}
+        .card-glow-won{box-shadow:inset 0 0 30px rgba(63,185,80,0.2),0 0 20px rgba(63,185,80,0.15)}
+        .card-glow-lost{box-shadow:inset 0 0 30px rgba(248,81,73,0.2),0 0 20px rgba(248,81,73,0.15)}
+        .goals-input{width:50px;padding:4px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;text-align:center;font-size:0.8rem}
+        .goals-row{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:0.75rem;color:#8b949e}
+        .bet-tracking{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:15px;margin-top:15px}
+        .tracking-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-top:15px}
+        .tracking-card{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;text-align:center}
+        .tracking-label{font-size:0.7rem;color:#8b949e;text-transform:uppercase;margin-bottom:5px}
+        .tracking-value{font-size:1.3rem;font-weight:bold;color:#fff}
+        .tracking-sub{font-size:0.7rem;color:#8b949e;margin-top:3px}
+        .best-performer{border:1px solid #3fb950;background:rgba(63,185,80,0.1)}
+        .best-performer .tracking-value{color:#3fb950}
+        .bet-type-tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:0.65rem;margin-left:5px;text-transform:uppercase}
+        .tag-straight{background:rgba(88,166,255,0.2);color:#58a6ff}
+        .tag-over{background:rgba(163,113,247,0.2);color:#a371f7}
+        .tag-under{background:rgba(210,153,34,0.2);color:#d29922}
+        .tag-btts{background:rgba(46,160,67,0.2);color:#3fb950}
+        .learning-indicator{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:rgba(88,166,255,0.1);border-radius:6px;font-size:0.75rem;color:#58a6ff}
+        .learning-dot{width:6px;height:6px;background:#58a6ff;border-radius:50%;animation:pulse 1.5s infinite}
+        .filter-tabs{display:flex;gap:5px;margin-bottom:15px;flex-wrap:wrap}
+        .filter-tab{padding:6px 12px;background:#21262d;border:1px solid #30363d;border-radius:20px;font-size:0.75rem;cursor:pointer;color:#8b949e}
+        .filter-tab.active{background:#58a6ff;color:#fff;border-color:#58a6ff}
+        .history-scroll{max-height:400px;overflow-y:auto}
+        .form-display{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0d1117;border-radius:6px;font-size:0.8rem;margin-top:10px}
+        .form-label{color:#8b949e}
+        .form-value{font-weight:bold}
+        .form-rising{color:#3fb950}
+        .form-stable{color:#d29922}
+        .form-falling{color:#f85149}
+        .why-section{margin-top:12px;padding:10px;background:#0d1117;border-radius:6px;font-size:0.75rem}
+        .why-title{color:#8b949e;margin-bottom:6px}
+        .why-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #21262d}
+        .why-item:last-child{border-bottom:none}
+        .why-feature{color:#c9d1d9}
+        .why-weight{color:#58a6ff;font-weight:bold}
+        .tier-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.65rem;font-weight:bold;margin-left:5px}
+        .tier-a{background:rgba(63,185,80,0.2);color:#3fb950}
+        .tier-b{background:rgba(210,153,34,0.2);color:#d29922}
+        .tier-c{background:rgba(248,81,73,0.2);color:#f85149}
+        .streak-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:0.65rem;margin-left:5px;font-weight:bold}
+        .streak-hot{background:rgba(63,185,80,0.2);color:#3fb950}
+        .streak-cold{background:rgba(248,81,73,0.2);color:#f85149}
+        .pattern-match{margin-top:8px;padding:8px;background:rgba(163,113,247,0.1);border-radius:6px;font-size:0.75rem;color:#a371f7}
+        .fingerprint{font-family:monospace;font-size:0.7rem;color:#8b949e;margin-top:6px;padding:4px 8px;background:#161b22;border-radius:4px}
+        .model-learning{margin-top:15px;padding:15px;background:#0d1117;border-radius:6px}
+        .model-learning-title{color:#8b949e;font-size:0.8rem;margin-bottom:10px;text-transform:uppercase}
+        .weight-bar{display:flex;align-items:center;margin-bottom:8px;font-size:0.75rem}
+        .weight-label{width:120px;color:#c9d1d9}
+        .weight-track{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden;margin:0 10px}
+        .weight-fill{height:100%;border-radius:4px;transition:width 0.3s}
+        .weight-value{width:40px;text-align:right;color:#58a6ff;font-weight:bold}
+        .weight-straight{background:#58a6ff}
+        .weight-overunder{background:#a371f7}
+        .weight-btts{background:#3fb950}
+        .weight-ppg{background:#f0883e}
+        .metrics-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+        .metric-box{padding:10px;background:#161b22;border-radius:6px;text-align:center}
+        .metric-label{font-size:0.7rem;color:#8b949e}
+        .metric-value{font-size:1.1rem;font-weight:bold;color:#fff;margin-top:4px}
+        .blind-spot{margin-top:10px;padding:10px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:6px;font-size:0.75rem;color:#f85149}
+        .disagree-btn{background:transparent;color:#8b949e;border:1px solid #6e7681;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.7rem}
+        .disagree-btn:hover{color:#f85149;border-color:#f85149}
+        .status-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;font-size:0.7rem;margin-right:4px}
+        .reset-learning-btn{background:transparent;color:#8b949e;border:1px solid #30363d;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:0.75rem;margin-top:10px}
+        .reset-learning-btn:hover{color:#f85149;border-color:#f85149}
+        .ppg-spread-indicator{margin-top:15px;padding:12px;background:#0d1117;border-radius:6px;border:1px solid #21262d}
+        .spread-bar{position:relative;height:24px;background:#21262d;border-radius:12px;margin-bottom:10px;overflow:hidden}
+        .home-ppg-marker,.away-ppg-marker{position:absolute;top:2px;width:20px;height:20px;border-radius:50%;transform:translateX(-50%);z-index:3}
+        .home-ppg-marker{background:#58a6ff;border:2px solid #fff}
+        .away-ppg-marker{background:#f85149;border:2px solid #fff}
+        .spread-zone{position:absolute;top:4px;height:16px;border-radius:8px;opacity:0.6;z-index:2}
+        .spread-zone-close{background:linear-gradient(90deg,#3fb950,#2ea043)}
+        .spread-zone-moderate{background:linear-gradient(90deg,#d29922,#f0883e)}
+        .spread-zone-large{background:linear-gradient(90deg,#f85149,#da3633)}
+        .spread-zone-extreme{background:linear-gradient(90deg,#8b949e,#6e7681)}
+        .spread-label{font-size:0.85rem;font-weight:bold;color:#c9d1d9;margin-bottom:5px}
+        .spread-signal{font-size:0.75rem;padding:6px 10px;border-radius:4px;margin-top:5px}
+        .spread-signal-close{background:rgba(63,185,80,0.15);color:#3fb950;border-left:3px solid #3fb950}
+        .spread-signal-moderate{background:rgba(210,153,34,0.15);color:#d29922;border-left:3px solid #d29922}
+        .spread-signal-large{background:rgba(248,81,73,0.15);color:#f85149;border-left:3px solid #f85149}
+        .spread-signal-extreme{background:rgba(139,148,158,0.15);color:#8b949e;border-left:3px solid #8b949e}
+        .spread-competitiveness{font-size:0.7rem;color:#8b949e;margin-top:5px}
+        .spread-competitiveness span{color:#58a6ff;font-weight:bold}
+        .quick-scan{margin-top:12px;padding:10px;background:#0d1117;border-radius:6px;border:1px solid #21262d}
+        .quick-scan-title{font-size:0.75rem;color:#8b949e;margin-bottom:8px;text-transform:uppercase}
+        .scan-signals{display:flex;gap:10px;flex-wrap:wrap}
+        .scan-signal{padding:6px 12px;border-radius:4px;font-size:0.75rem;font-weight:bold}
+        .scan-signal-strong{background:rgba(63,185,80,0.2);color:#3fb950;border:1px solid #3fb950}
+        .scan-signal-moderate{background:rgba(210,153,34,0.2);color:#d29922;border:1px solid #d29922}
+        .scan-signal-weak{background:rgba(139,148,158,0.2);color:#8b949e;border:1px solid #6e7681}
+        .ppg-both-high{color:#3fb950!important;font-weight:bold}
+        .ppg-both-low{color:#f85149!important;font-weight:bold}
+        .ppg-mixed{color:#d29922!important}
+        .ppg-spread-badge{display:inline-block;padding:2px 6px;border-radius:3px;font-size:0.6rem;margin-left:5px;font-weight:bold;text-transform:uppercase}
+        .ppg-badge-close{background:rgba(63,185,80,0.2);color:#3fb950}
+        .ppg-badge-moderate{background:rgba(210,153,34,0.2);color:#d29922}
+        .ppg-badge-large{background:rgba(248,81,73,0.2);color:#f85149}
+        .ppg-badge-extreme{background:rgba(139,148,158,0.2);color:#8b949e}
+        .warning-flag{margin-top:10px;padding:8px 12px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:6px;font-size:0.75rem;color:#f85149;display:flex;align-items:center;gap:8px}
+        .warning-flag::before{content:'!';font-weight:bold;font-size:1rem}
+        .tooltip{position:relative;display:inline-block;cursor:help}
+        .tooltip::after{content:attr(data-tooltip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);padding:6px 10px;background:#21262d;border:1px solid #30363d;border-radius:4px;font-size:0.7rem;color:#c9d1d9;white-space:nowrap;opacity:0;visibility:hidden;transition:opacity 0.2s;z-index:100}
+        .tooltip:hover::after{opacity:1;visibility:visible}
+        .ppg-performance{margin-top:15px;padding:15px;background:#0d1117;border-radius:6px}
+        .ppg-performance-title{font-size:0.8rem;color:#8b949e;margin-bottom:10px;text-transform:uppercase}
+        .ppg-cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+        .ppg-cat-box{padding:10px;background:#161b22;border-radius:6px;text-align:center;border:1px solid #21262d}
+        .ppg-cat-name{font-size:0.7rem;color:#8b949e;text-transform:uppercase}
+        .ppg-cat-rate{font-size:1rem;font-weight:bold;color:#fff;margin-top:4px}
+        .ppg-cat-count{font-size:0.65rem;color:#6e7681;margin-top:2px}
+        .ppg-cat-warning{border-color:#f85149;background:rgba(248,81,73,0.05)}
+        .input-hint{font-size:0.65rem;color:#6e7681;margin-top:4px;font-style:italic}
+
+        /* Strategy Box Styles */
+        .strategy-box{background:#0d1117;border:2px solid;border-radius:8px;padding:15px;margin:15px 0}
+        .strategy-box.bet-allowed{border-color:#3fb950}
+        .strategy-box.bet-rejected{border-color:#f85149}
+        .strategy-box.bet-caution{border-color:#d29922}
+        .strategy-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+        .verdict-badge{padding:4px 12px;border-radius:12px;font-weight:bold;font-size:0.85rem}
+        .verdict-badge.bet{background:rgba(63,185,80,0.2);color:#3fb950}
+        .verdict-badge.no-bet{background:rgba(248,81,73,0.2);color:#f85149}
+        .verdict-badge.caution{background:rgba(210,153,34,0.2);color:#d29922}
+        .pattern-badge{padding:2px 8px;background:#21262d;border-radius:4px;font-family:monospace;font-size:0.75rem;color:#58a6ff}
+        .strategy-reason{font-size:0.85rem;color:#c9d1d9;margin-bottom:10px;line-height:1.4}
+        .stake-rec{margin-top:10px;font-size:0.9rem;color:#a371f7;font-weight:bold}
+        .alternative{margin-top:10px;padding:8px;background:rgba(163,113,247,0.1);border-radius:4px;font-size:0.8rem;color:#a371f7}
+        .risk-level{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7rem;margin-left:5px;font-weight:bold}
+        .risk-low{background:rgba(63,185,80,0.2);color:#3fb950}
+        .risk-medium{background:rgba(210,153,34,0.2);color:#d29922}
+        .risk-high{background:rgba(248,81,73,0.2);color:#f85149}
+        .expected-winrate{font-size:0.8rem;color:#8b949e;margin-top:8px}
+        .expected-winrate span{color:#3fb950;font-weight:bold}
+
+        /* Pattern Performance Dashboard */
+        .pattern-dashboard{margin-top:15px;padding:15px;background:#0d1117;border-radius:6px;border:1px solid #21262d}
+        .pattern-dashboard-title{font-size:0.8rem;color:#8b949e;margin-bottom:10px;text-transform:uppercase}
+        .pattern-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+        .pattern-item{padding:10px;background:#161b22;border-radius:6px;text-align:center;border:1px solid #21262d;font-size:0.75rem}
+        .pattern-item.positive{border-color:#3fb950;background:rgba(63,185,80,0.05)}
+        .pattern-item.negative{border-color:#f85149;background:rgba(248,81,73,0.05)}
+        .pattern-item.neutral{border-color:#8b949e}
+        .pattern-name{font-family:monospace;color:#58a6ff;font-weight:bold;margin-bottom:4px}
+        .pattern-stats{color:#c9d1d9}
+        .pattern-roi{font-weight:bold;margin-top:4px}
+        .pattern-roi.positive{color:#3fb950}
+        .pattern-roi.negative{color:#f85149}
+        .strategy-summary{margin-top:15px;padding:12px;background:#161b22;border-radius:6px;font-size:0.8rem}
+        .strategy-summary div{margin-bottom:6px}
+        .strategy-summary div:last-child{margin-bottom:0}
+        .strategy-summary span{color:#58a6ff;font-weight:bold}
+
+        /* Backtest Results */
+        .backtest-results{margin-top:15px;padding:15px;background:#0d1117;border-radius:6px;border:1px solid #21262d}
+        .backtest-title{font-size:0.8rem;color:#8b949e;margin-bottom:10px;text-transform:uppercase}
+        .backtest-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+        .backtest-metric{padding:10px;background:#161b22;border-radius:6px;text-align:center}
+        .backtest-metric-label{font-size:0.7rem;color:#8b949e}
+        .backtest-metric-value{font-size:1.2rem;font-weight:bold;color:#fff;margin-top:4px}
+        .backtest-improvement{color:#3fb950;font-size:0.75rem;margin-top:4px}
+        .backtest-league{margin-top:8px;padding:8px;background:#161b22;border-radius:4px;font-size:0.75rem;display:flex;justify-content:space-between;align-items:center}
+        .backtest-league-name{color:#c9d1d9}
+        .backtest-league-rate{color:#3fb950;font-weight:bold}
+
+        /* Pattern ID display in history */
+        .pattern-id-display{font-family:monospace;font-size:0.65rem;color:#8b949e;margin-top:4px;padding:2px 6px;background:#0d1117;border-radius:3px;display:inline-block}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>All Football Stats Predictor</h1>
+        <div class="card">
+            <div class="card-title">Match Setup</div>
+            <div class="teams">
+                <input type="text" id="homeTeam" class="team-input" placeholder="Home Team">
+                <span class="vs">VS</span>
+                <input type="text" id="awayTeam" class="team-input" placeholder="Away Team">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="team-header" id="homeHeader">HOME TEAM</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label tooltip" data-tooltip="Points Per Game - spread affects goal expectations">PPG</div>
+                            <input type="number" id="hPPG" class="stat-input" placeholder="2.0" step="0.01" onchange="updateFormDisplay()">
+                            <div class="input-hint">Spread impacts predictions</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Scored/G</div>
+                            <input type="number" id="hScored" class="stat-input" placeholder="1.5" step="0.01" onchange="updateFormDisplay()">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Conceded/G</div>
+                            <input type="number" id="hConceded" class="stat-input" placeholder="1.0" step="0.01" onchange="updateFormDisplay()">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Over 2.5%</div>
+                            <input type="number" id="hOver25" class="stat-input" placeholder="60" max="100">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">BTTS%</div>
+                            <input type="number" id="hBTTS" class="stat-input" placeholder="55" max="100">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Clean Sheet%</div>
+                            <input type="number" id="hCS" class="stat-input" placeholder="30" max="100">
+                        </div>
+                    </div>
+                    <div class="form-display" id="homeFormDisplay">
+                        <span class="form-label">Form:</span>
+                        <span class="form-value" id="homeFormValue">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="team-header" id="awayHeader">AWAY TEAM</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label tooltip" data-tooltip="Points Per Game - spread affects goal expectations">PPG</div>
+                            <input type="number" id="aPPG" class="stat-input" placeholder="1.5" step="0.01" onchange="updateFormDisplay()">
+                            <div class="input-hint">Spread impacts predictions</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Scored/G</div>
+                            <input type="number" id="aScored" class="stat-input" placeholder="1.2" step="0.01" onchange="updateFormDisplay()">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Conceded/G</div>
+                            <input type="number" id="aConceded" class="stat-input" placeholder="1.3" step="0.01" onchange="updateFormDisplay()">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Over 2.5%</div>
+                            <input type="number" id="aOver25" class="stat-input" placeholder="50" max="100">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">BTTS%</div>
+                            <input type="number" id="aBTTS" class="stat-input" placeholder="50" max="100">
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Clean Sheet%</div>
+                            <input type="number" id="aCS" class="stat-input" placeholder="25" max="100">
+                        </div>
+                    </div>
+                    <div class="form-display" id="awayFormDisplay">
+                        <span class="form-label">Form:</span>
+                        <span class="form-value" id="awayFormValue">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Market Odds (Optional)</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Home Win</div>
+                    <input type="number" id="odds1" class="stat-input" placeholder="2.00" step="0.01">
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Draw</div>
+                    <input type="number" id="oddsX" class="stat-input" placeholder="3.40" step="0.01">
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Away Win</div>
+                    <input type="number" id="odds2" class="stat-input" placeholder="3.50" step="0.01">
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Over 2.5</div>
+                    <input type="number" id="oddsOver" class="stat-input" placeholder="1.85" step="0.01">
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Under 2.5</div>
+                    <input type="number" id="oddsUnder" class="stat-input" placeholder="1.95" step="0.01">
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">BTTS Yes</div>
+                    <input type="number" id="oddsBTTS" class="stat-input" placeholder="1.75" step="0.01">
+                </div>
+            </div>
+        </div>
+        <button class="btn" onclick="predict()">PREDICT MATCH</button>
+        <button class="btn btn-clear" onclick="clearAll()" style="margin-top:8px">CLEAR</button>
+        
+        <div id="resultCard" class="card result-card">
+            <div class="card-title" onclick="toggleCard('resultContent', this)">
+                <span>Prediction Result</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="resultContent" class="card-content">
+            <div class="prediction-box">
+                <div class="prediction-main">
+                    <div>
+                        <div class="prediction-type" id="predType">Over 2.5 Goals</div>
+                        <div style="font-size:0.8rem;color:#8b949e;margin-top:4px" id="predReason">Based on scoring stats</div>
+                    </div>
+                    <div class="prediction-odds" id="predOdds">@1.85</div>
+                </div>
+                <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+                    <span style="font-size:0.75rem;color:#8b949e">Probability</span>
+                    <div class="confidence-bar" style="flex:1">
+                        <div class="confidence-fill" id="confBar" style="width:0%"></div>
+                    </div>
+                    <span style="font-size:0.8rem;font-weight:bold" id="confText">0%</span>
+                </div>
+                <div style="margin-top:10px" id="valueTag"></div>
+                <div id="patternMatch" class="pattern-match" style="display:none"></div>
+            </div>
+            
+            <!-- Strategy Recommendation Box -->
+            <div id="strategyRecommendation" class="strategy-box" style="display:none">
+                <div class="strategy-header">
+                    <span id="strategyVerdict" class="verdict-badge">BET</span>
+                    <span id="patternId" class="pattern-badge">A_Over_moderate</span>
+                    <span id="riskLevel" class="risk-level risk-low">LOW RISK</span>
+                </div>
+                <div id="strategyReason" class="strategy-reason">High-performing pattern detected</div>
+                <div id="stakeRecommendation" class="stake-rec">Recommended stake: 1.5 units</div>
+                <div id="expectedWinRate" class="expected-winrate">Expected win rate: <span>67-70%</span></div>
+                <div id="alternativeBet" class="alternative" style="display:none">
+                    Alternative: <span id="altText"></span>
+                </div>
+            </div>
+            
+            <div id="ppgSpreadIndicator" class="ppg-spread-indicator" style="display:none">
+                <div class="spread-label" id="spreadLabel">PPG Spread: 0.00 - Close</div>
+                <div class="spread-bar">
+                    <div class="spread-zone" id="spreadZone" style="left:0%;width:0%"></div>
+                    <div class="home-ppg-marker" id="homePPGMarker" style="left:0%"></div>
+                    <div class="away-ppg-marker" id="awayPPGMarker" style="left:0%"></div>
+                </div>
+                <div class="spread-competitiveness">Competitiveness Index: <span id="competitivenessIndex">0</span>/100</div>
+                <div class="spread-signal" id="spreadSignal">Signal text</div>
+            </div>
+            <div id="quickScan" class="quick-scan" style="display:none">
+                <div class="quick-scan-title">Quick Scan Signals</div>
+                <div class="scan-signals" id="scanSignals"></div>
+            </div>
+            <div id="warningFlag" class="warning-flag" style="display:none">
+                <span id="warningText">Warning message</span>
+            </div>
+            <div class="why-section" id="whySection" style="display:none">
+                <div class="why-title">Active Features & Weights</div>
+                <div id="whyContent"></div>
+            </div>
+            <div class="card-title" style="margin-top:15px">Key Stats (Home vs Away)</div>
+            <table class="stats-table">
+                <tr><th>Stat</th><th>H</th><th>A</th></tr>
+                <tr><td style="text-align:left">PPG</td><td class="home-stat" id="tHPPG">-</td><td class="away-stat" id="tAPPG">-</td></tr>
+                <tr><td style="text-align:left">Scored/Game</td><td class="home-stat" id="tHScored">-</td><td class="away-stat" id="tAScored">-</td></tr>
+                <tr><td style="text-align:left">Conceded/Game</td><td class="home-stat" id="tHConc">-</td><td class="away-stat" id="tAConc">-</td></tr>
+                <tr><td style="text-align:left">Over 2.5%</td><td class="home-stat" id="tHOver">-</td><td class="away-stat" id="tAOver">-</td></tr>
+                <tr><td style="text-align:left">BTTS%</td><td class="home-stat" id="tHBTTS">-</td><td class="away-stat" id="tABTTS">-</td></tr>
+                <tr><td style="text-align:left">Clean Sheet%</td><td class="home-stat" id="tHCS">-</td><td class="away-stat" id="tACS">-</td></tr>
+            </table>
+            <div class="card-title" style="margin-top:15px">All Markets Probability</div>
+            <div id="allMarkets" style="font-size:0.85rem"></div>
+            <div style="display:flex;gap:10px;margin-top:15px">
+                <button class="btn btn-small" onclick="saveToHistory()" style="flex:1">Save to History</button>
+                <button class="btn btn-small btn-disagree" onclick="disagreeWithPrediction()" style="flex:1">Disagree</button>
+            </div>
+            </div>
+        </div>
+        
+        <!-- Backtest Results Card -->
+        <div id="backtestCard" class="card" style="display:none">
+            <div class="card-title" onclick="toggleCard('backtestContent', this)">
+                <span>Backtest Results - Major Leagues</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="backtestContent" class="card-content">
+            <div class="backtest-results">
+                <div class="backtest-grid">
+                    <div class="backtest-metric">
+                        <div class="backtest-metric-label">Baseline Win Rate</div>
+                        <div class="backtest-metric-value" id="baselineWinRate">63%</div>
+                    </div>
+                    <div class="backtest-metric">
+                        <div class="backtest-metric-label">Strategy Win Rate</div>
+                        <div class="backtest-metric-value" id="strategyWinRate">68.5%</div>
+                        <div class="backtest-improvement">+5.5%</div>
+                    </div>
+                    <div class="backtest-metric">
+                        <div class="backtest-metric-label">Total Matches</div>
+                        <div class="backtest-metric-value" id="backtestTotal">500</div>
+                    </div>
+                    <div class="backtest-metric">
+                        <div class="backtest-metric-label">Bets Placed</div>
+                        <div class="backtest-metric-value" id="betsPlaced">385</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px;font-size:0.8rem;color:#8b949e">Performance by League:</div>
+                <div id="leagueResults"></div>
+            </div>
+            </div>
+        </div>
+        
+        <div id="historyCard" class="card" style="display:none">
+            <div class="card-title" onclick="toggleCard('historyCardContent', this)">
+                <span>Prediction History</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="historyCardContent" class="card-content">
+            <div class="stats-summary">
+                <div class="stat-pill">Total: <span id="totalPreds">0</span></div>
+                <div class="stat-pill">Won: <span id="wonPreds">0</span></div>
+                <div class="stat-pill">Lost: <span id="lostPreds">0</span></div>
+                <div class="stat-pill">Win Rate: <span id="winRate">0%</span></div>
+            </div>
+            <div class="filter-tabs">
+                <div class="filter-tab active" onclick="filterHistory('all')">All</div>
+                <div class="filter-tab" onclick="filterHistory('straight')">Straight Wins</div>
+                <div class="filter-tab" onclick="filterHistory('overunder')">Over/Under</div>
+                <div class="filter-tab" onclick="filterHistory('btts')">BTTS</div>
+                <div class="filter-tab" onclick="filterHistory('closeppg')">Close PPG</div>
+            </div>
+            <div id="historyList" class="history-scroll"></div>
+            </div>
+        </div>
+        
+        <div id="betTrackingCard" class="card" style="display:none">
+            <div class="card-title" onclick="toggleCard('betTrackingContent', this)">
+                <span>Bet Tracking & Analytics</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="betTrackingContent" class="card-content">
+            <div class="tracking-grid">
+                <div class="tracking-card" id="straightCard">
+                    <div class="tracking-label">Straight Wins</div>
+                    <div class="tracking-value" id="straightWinRate">0%</div>
+                    <div class="tracking-sub"><span id="straightWon">0</span>/<span id="straightTotal">0</span> bets</div>
+                </div>
+                <div class="tracking-card" id="overCard">
+                    <div class="tracking-label">Over 2.5</div>
+                    <div class="tracking-value" id="overWinRate">0%</div>
+                    <div class="tracking-sub"><span id="overWon">0</span>/<span id="overTotal">0</span> bets</div>
+                </div>
+                <div class="tracking-card" id="underCard">
+                    <div class="tracking-label">Under 2.5</div>
+                    <div class="tracking-value" id="underWinRate">0%</div>
+                    <div class="tracking-sub"><span id="underWon">0</span>/<span id="underTotal">0</span> bets</div>
+                </div>
+                <div class="tracking-card" id="bttsCard">
+                    <div class="tracking-label">BTTS</div>
+                    <div class="tracking-value" id="bttsWinRate">0%</div>
+                    <div class="tracking-sub"><span id="bttsWon">0</span>/<span id="bttsTotal">0</span> bets</div>
+                </div>
+                <div class="tracking-card" id="highConfCard">
+                    <div class="tracking-label">High Confidence (70%+)</div>
+                    <div class="tracking-value" id="highConfWinRate">0%</div>
+                    <div class="tracking-sub"><span id="highConfWon">0</span>/<span id="highConfTotal">0</span> bets</div>
+                </div>
+                <div class="tracking-card" id="medConfCard">
+                    <div class="tracking-label">Medium Confidence (50-69%)</div>
+                    <div class="tracking-value" id="medConfWinRate">0%</div>
+                    <div class="tracking-sub"><span id="medConfWon">0</span>/<span id="medConfTotal">0</span> bets</div>
+                </div>
+            </div>
+            <div class="learning-indicator">
+                <span class="learning-dot"></span>
+                <span id="learningText">AI Learning: Analyzing patterns from your bet history...</span>
+            </div>
+            <div style="margin-top:15px;padding:10px;background:#161b22;border-radius:6px;font-size:0.8rem">
+                <div style="color:#8b949e;margin-bottom:5px">Best Performing Bet Type</div>
+                <div id="bestBetType" style="color:#3fb950;font-weight:bold;font-size:1rem">-</div>
+                <div id="bestBetAdvice" style="color:#8b949e;font-size:0.75rem;margin-top:3px"></div>
+            </div>
+            </div>
+        </div>
+        
+        <div id="modelLearningCard" class="card" style="display:none">
+            <div class="card-title" onclick="toggleCard('modelLearningContent', this)">
+                <span>Model Learning</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="modelLearningContent" class="card-content">
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div class="metric-label">Model Edge</div>
+                    <div class="metric-value" id="modelEdge">0%</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Calibration Score</div>
+                    <div class="metric-value" id="calibrationScore">-</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Learning Velocity</div>
+                    <div class="metric-value" id="learningVelocity">-</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Total Bets Tracked</div>
+                    <div class="metric-value" id="totalBetsTracked">0</div>
+                </div>
+            </div>
+            <div class="ppg-performance">
+                <div class="ppg-performance-title">PPG Spread Performance</div>
+                <div class="ppg-cat-grid" id="ppgCatGrid">
+                    <div class="ppg-cat-box">
+                        <div class="ppg-cat-name">Close Spread</div>
+                        <div class="ppg-cat-rate" id="ppgCloseRate">-</div>
+                        <div class="ppg-cat-count" id="ppgCloseCount">0 bets</div>
+                    </div>
+                    <div class="ppg-cat-box">
+                        <div class="ppg-cat-name">Moderate Spread</div>
+                        <div class="ppg-cat-rate" id="ppgModerateRate">-</div>
+                        <div class="ppg-cat-count" id="ppgModerateCount">0 bets</div>
+                    </div>
+                    <div class="ppg-cat-box">
+                        <div class="ppg-cat-name">Large Spread</div>
+                        <div class="ppg-cat-rate" id="ppgLargeRate">-</div>
+                        <div class="ppg-cat-count" id="ppgLargeCount">0 bets</div>
+                    </div>
+                    <div class="ppg-cat-box">
+                        <div class="ppg-cat-name">Extreme Spread</div>
+                        <div class="ppg-cat-rate" id="ppgExtremeRate">-</div>
+                        <div class="ppg-cat-count" id="ppgExtremeCount">0 bets</div>
+                    </div>
+                </div>
+                <div id="ppgBlindSpotWarning" class="blind-spot" style="display:none;margin-top:10px">
+                    Blind spot detected: One or more PPG spread categories showing &lt;40% win rate
+                </div>
+            </div>
+            <div class="model-learning">
+                <div class="model-learning-title">Feature Weights - Straight Market</div>
+                <div class="weight-bar">
+                    <span class="weight-label">PPG</span>
+                    <div class="weight-track"><div class="weight-fill weight-straight" id="w-straight-ppg" style="width:25%"></div></div>
+                    <span class="weight-value" id="wv-straight-ppg">0.25</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Form Trajectory</span>
+                    <div class="weight-track"><div class="weight-fill weight-straight" id="w-straight-form" style="width:20%"></div></div>
+                    <span class="weight-value" id="wv-straight-form">0.20</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Home Advantage</span>
+                    <div class="weight-track"><div class="weight-fill weight-straight" id="w-straight-home" style="width:20%"></div></div>
+                    <span class="weight-value" id="wv-straight-home">0.20</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Goals Balance</span>
+                    <div class="weight-track"><div class="weight-fill weight-straight" id="w-straight-goals" style="width:20%"></div></div>
+                    <span class="weight-value" id="wv-straight-goals">0.20</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Defensive Stability</span>
+                    <div class="weight-track"><div class="weight-fill weight-straight" id="w-straight-def" style="width:15%"></div></div>
+                    <span class="weight-value" id="wv-straight-def">0.15</span>
+                </div>
+            </div>
+            <div class="model-learning">
+                <div class="model-learning-title">Feature Weights - Over/Under Market</div>
+                <div class="weight-bar">
+                    <span class="weight-label">Expected Goals</span>
+                    <div class="weight-track"><div class="weight-fill weight-overunder" id="w-ou-xg" style="width:30%"></div></div>
+                    <span class="weight-value" id="wv-ou-xg">0.30</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Over 2.5 Trend</span>
+                    <div class="weight-track"><div class="weight-fill weight-overunder" id="w-ou-trend" style="width:25%"></div></div>
+                    <span class="weight-value" id="wv-ou-trend">0.25</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Defensive Gaps</span>
+                    <div class="weight-track"><div class="weight-fill weight-overunder" id="w-ou-gaps" style="width:25%"></div></div>
+                    <span class="weight-value" id="wv-ou-gaps">0.25</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Pace Indicator</span>
+                    <div class="weight-track"><div class="weight-fill weight-overunder" id="w-ou-pace" style="width:20%"></div></div>
+                    <span class="weight-value" id="wv-ou-pace">0.20</span>
+                </div>
+            </div>
+            <div class="model-learning">
+                <div class="model-learning-title">Feature Weights - BTTS Market</div>
+                <div class="weight-bar">
+                    <span class="weight-label">Attack Reliability</span>
+                    <div class="weight-track"><div class="weight-fill weight-btts" id="w-btts-attack" style="width:35%"></div></div>
+                    <span class="weight-value" id="wv-btts-attack">0.35</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Defensive Vulnerability</span>
+                    <div class="weight-track"><div class="weight-fill weight-btts" id="w-btts-def" style="width:35%"></div></div>
+                    <span class="weight-value" id="wv-btts-def">0.35</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">BTTS History</span>
+                    <div class="weight-track"><div class="weight-fill weight-btts" id="w-btts-hist" style="width:30%"></div></div>
+                    <span class="weight-value" id="wv-btts-hist">0.30</span>
+                </div>
+            </div>
+            <div class="model-learning">
+                <div class="model-learning-title">Feature Weights - PPG Spread</div>
+                <div class="weight-bar">
+                    <span class="weight-label">Close Spread</span>
+                    <div class="weight-track"><div class="weight-fill weight-ppg" id="w-ppg-close" style="width:25%"></div></div>
+                    <span class="weight-value" id="wv-ppg-close">0.25</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Moderate Spread</span>
+                    <div class="weight-track"><div class="weight-fill weight-ppg" id="w-ppg-moderate" style="width:20%"></div></div>
+                    <span class="weight-value" id="wv-ppg-moderate">0.20</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Large (Attacking)</span>
+                    <div class="weight-track"><div class="weight-fill weight-ppg" id="w-ppg-large-att" style="width:30%"></div></div>
+                    <span class="weight-value" id="wv-ppg-large-att">0.30</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Large (Controlling)</span>
+                    <div class="weight-track"><div class="weight-fill weight-ppg" id="w-ppg-large-ctrl" style="width:30%"></div></div>
+                    <span class="weight-value" id="wv-ppg-large-ctrl">0.30</span>
+                </div>
+                <div class="weight-bar">
+                    <span class="weight-label">Extreme Spread</span>
+                    <div class="weight-track"><div class="weight-fill weight-ppg" id="w-ppg-extreme" style="width:25%"></div></div>
+                    <span class="weight-value" id="wv-ppg-extreme">0.25</span>
+                </div>
+            </div>
+            <button class="reset-learning-btn" onclick="resetLearning()">Reset Learning</button>
+            </div>
+        </div>
+        
+        <!-- Pattern Performance Dashboard -->
+        <div id="patternPerformanceCard" class="card" style="display:none">
+            <div class="card-title" onclick="toggleCard('patternPerformanceContent', this)">
+                <span>Pattern Performance Tracker</span>
+                <span class="collapse-btn">▼</span>
+            </div>
+            <div id="patternPerformanceContent" class="card-content">
+            <div class="pattern-dashboard">
+                <div class="pattern-dashboard-title">Pattern-Specific Performance</div>
+                <div id="patternStatsGrid" class="pattern-grid">
+                    <!-- Dynamically populated -->
+                </div>
+                <div class="strategy-summary">
+                    <div>Best Pattern: <span id="bestPattern">-</span></div>
+                    <div>Worst Pattern: <span id="worstPattern">-</span></div>
+                    <div>Current Edge: <span id="currentPatternEdge">-</span></div>
+                </div>
+            </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Strategy Tools</div>
+            <button class="btn btn-backtest" onclick="runBacktest()">RUN BACKTEST - MAJOR LEAGUES</button>
+            <button class="btn btn-small" onclick="showPatternDashboard()" style="margin-top:8px">VIEW PATTERN PERFORMANCE</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Live Scores</div>
+            <div class="widget-container">
+                <div class="widget-header">
+                    <span class="live-dot"></span>
+                    <span style="font-size:0.85rem;font-weight:bold">Live Matches</span>
+                    <span style="margin-left:auto;font-size:0.7rem;color:#8b949e">Powered by FotMob</span>
+                </div>
+                <iframe src="https://www.fotmob.com/widgets/matches?theme=dark" loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // STRATEGY CONSTANTS - Pattern Performance Data
+        // ============================================
+        
+        // Blacklisted patterns (negative ROI - never bet these)
+        const BLACKLISTED_PATTERNS = [
+            'B_Over_close',      // -13.4% ROI
+            'B_Under_large',     // -25.9% ROI
+            'A_Over_close',      // -2.5% ROI
+            'A_Under_large'      // -5.4% ROI
+        ];
+        
+        // Priority patterns (positive ROI - always bet these)
+        const PRIORITY_PATTERNS = [
+            'A_Under_moderate',  // +19.7% ROI
+            'B_Over_large',      // +18.9% ROI
+            'A_Under_close',     // +16.0% ROI (exception to close spread rule)
+            'A_Over_large'       // +11.0% ROI
+        ];
+        
+        // Pattern expected win rates
+        const PATTERN_WIN_RATES = {
+            'A_Over_moderate': '67-70%',
+            'A_Under_moderate': '67-70%',
+            'A_Over_large': '65-68%',
+            'A_Under_large': '62-65%',
+            'A_Over_close': '60-63%',
+            'A_Under_close': '62-65%',
+            'B_Over_moderate': '60-63%',
+            'B_Under_moderate': '58-62%',
+            'B_Over_large': '60-63%',
+            'B_Under_large': '55-58%',
+            'B_Over_close': '52-55%',
+            'B_Under_close': '55-58%',
+            'C_Over_moderate': '50-55%',
+            'C_Under_moderate': '50-55%',
+            'C_Over_large': '52-55%',
+            'C_Under_large': '50-53%',
+            'C_Over_close': '48-52%',
+            'C_Under_close': '48-52%'
+        };
+        
+        // Pattern ROI data for reference
+        const PATTERN_ROI = {
+            'A_Under_moderate': 19.7,
+            'B_Over_large': 18.9,
+            'A_Under_close': 16.0,
+            'A_Over_large': 11.0,
+            'A_Over_moderate': 8.5,
+            'B_Under_moderate': 5.2,
+            'B_Over_moderate': 3.1,
+            'A_Over_close': -2.5,
+            'A_Under_large': -5.4,
+            'B_Under_close': -8.1,
+            'B_Over_close': -13.4,
+            'B_Under_large': -25.9
+        };
+
+        // ============================================
+        // DEFAULT WEIGHTS
+        // ============================================
+        
+        const defaultWeights = {
+            straight: { ppg: 0.25, formTrajectory: 0.20, homeAdvantage: 0.20, goalsBalance: 0.20, defensiveStability: 0.15 },
+            overUnder: { xGoals: 0.30, over25Trend: 0.25, defensiveGaps: 0.25, paceIndicator: 0.20 },
+            btts: { attackReliability: 0.35, defensiveVulnerability: 0.35, bttsHistory: 0.30 },
+            ppgSpread: { closeSpread: 0.25, moderateSpread: 0.20, largeSpreadAttacking: 0.30, largeSpreadControlling: 0.30, extremeSpread: 0.25 }
+        };
+        
+        const baselineWeights = JSON.parse(JSON.stringify(defaultWeights));
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function loadWeights() {
+            const saved = localStorage.getItem('fs_modelWeights');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (!parsed.ppgSpread) parsed.ppgSpread = JSON.parse(JSON.stringify(defaultWeights.ppgSpread));
+                return parsed;
+            }
+            return JSON.parse(JSON.stringify(defaultWeights));
+        }
+        
+        function saveWeights(weights) { 
+            localStorage.setItem('fs_modelWeights', JSON.stringify(weights)); 
+        }
+        
+        let modelWeights = loadWeights();
+        let currentPrediction = null, currentFilter = 'all';
+        
+        function getVal(id) { 
+            const el = document.getElementById(id); 
+            return el ? parseFloat(el.value) || 0 : 0; 
+        }
+        
+        function getPct(id) { 
+            const el = document.getElementById(id); 
+            return el ? (parseFloat(el.value) || 0) / 100 : 0; 
+        }
+        
+        function getProbColorClass(prob) { 
+            return prob >= 70 ? 'prob-high' : prob >= 50 ? 'prob-medium' : 'prob-low'; 
+        }
+        
+        function getConfBarClass(prob) { 
+            return prob >= 70 ? 'conf-high' : prob >= 50 ? 'conf-medium' : 'conf-low'; 
+        }
+        
+        function getValueTagClass(conf) { 
+            return conf >= 70 ? 'value-high' : conf >= 50 ? 'value-medium' : 'value-low'; 
+        }
+        
+        function getValueTagText(conf) { 
+            return conf >= 70 ? 'HIGH CONFIDENCE' : conf >= 50 ? 'MEDIUM CONFIDENCE' : 'LOW CONFIDENCE'; 
+        }
+        
+        function getBetType(prediction) { 
+            const pred = prediction.toLowerCase(); 
+            return pred.includes('over') ? 'over' : pred.includes('under') ? 'under' : pred.includes('btts') ? 'btts' : 'straight'; 
+        }
+        
+        function getBetTypeTag(betType) { 
+            const tags = { 
+                straight: '<span class="bet-type-tag tag-straight">Straight</span>', 
+                over: '<span class="bet-type-tag tag-over">Over</span>', 
+                under: '<span class="bet-type-tag tag-under">Under</span>', 
+                btts: '<span class="bet-type-tag tag-btts">BTTS</span>' 
+            }; 
+            return tags[betType] || ''; 
+        }
+        
+        function getConfidenceTier(confidence) { 
+            return confidence >= 80 ? 'A' : confidence >= 60 ? 'B' : 'C'; 
+        }
+        
+        /**
+         * Toggle card collapse/expand
+         */
+        function toggleCard(contentId, titleElem) {
+            const content = document.getElementById(contentId);
+            const btn = titleElem.querySelector('.collapse-btn');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                btn.classList.remove('collapsed');
+                btn.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                btn.classList.add('collapsed');
+                btn.textContent = '▶';
+            }
+        }
+        
+        function getTierBadge(confidence) { 
+            const tier = getConfidenceTier(confidence), 
+                  tierClass = tier === 'A' ? 'tier-a' : tier === 'B' ? 'tier-b' : 'tier-c'; 
+            return `<span class="tier-badge ${tierClass}">Tier ${tier}</span>`; 
+        }
+        
+        function getPPGSpreadBadge(ppgSpread) { 
+            return ppgSpread ? `<span class="ppg-spread-badge ppg-badge-${ppgSpread.category}">${ppgSpread.category}</span>` : ''; 
+        }
+        
+        function getPPGColorClass(hPPG, aPPG) { 
+            return hPPG >= 1.5 && aPPG >= 1.5 ? 'ppg-both-high' : hPPG <= 0.8 && aPPG <= 0.8 ? 'ppg-both-low' : 'ppg-mixed'; 
+        }
+
+        // ============================================
+        // PPG SPREAD FUNCTIONS
+        // ============================================
+        
+        function classifyPPGSpread(homePPG, awayPPG) {
+            const hPPG = handleEdgeCasePPG(homePPG), 
+                  aPPG = handleEdgeCasePPG(awayPPG);
+            const spread = Math.abs(hPPG - aPPG);
+            let category, competitivenessIndex, expectedDynamic, recommendedAdjustment;
+            
+            if (spread <= 0.5) { 
+                category = 'close'; 
+                competitivenessIndex = Math.round(75 + (0.5 - spread) * 50); 
+                expectedDynamic = 'competitive'; 
+                recommendedAdjustment = 1.15; 
+            } else if (spread <= 1.2) { 
+                category = 'moderate'; 
+                competitivenessIndex = Math.round(50 + (1.2 - spread) * (25 / 0.7)); 
+                expectedDynamic = 'mismatch_controlled'; 
+                recommendedAdjustment = 1.05; 
+            } else if (spread <= 2.0) { 
+                category = 'large'; 
+                competitivenessIndex = Math.round(25 + (2.0 - spread) * (25 / 0.8)); 
+                expectedDynamic = 'mismatch_open'; 
+                recommendedAdjustment = 1.0; 
+            } else { 
+                category = 'extreme'; 
+                competitivenessIndex = Math.round(Math.max(0, 25 - (spread - 2.0) * 25)); 
+                expectedDynamic = 'unpredictable'; 
+                recommendedAdjustment = 0.90; 
+            }
+            
+            return { 
+                spread, 
+                category, 
+                competitivenessIndex: Math.min(100, Math.max(0, competitivenessIndex)), 
+                expectedDynamic, 
+                recommendedAdjustment, 
+                homePPG: hPPG, 
+                awayPPG: aPPG, 
+                favorite: hPPG > aPPG ? 'home' : 'away' 
+            };
+        }
+        
+        function handleEdgeCasePPG(ppg) {
+            if (ppg === null || ppg === undefined || isNaN(ppg)) return 1.0;
+            if (ppg < 0) return Math.abs(ppg);
+            if (ppg > 3.0) return 3.0;
+            if (ppg === 0) return 1.0;
+            return ppg;
+        }
+        
+        function getPPGEdgeCaseWarning(homePPG, awayPPG) {
+            const warnings = [];
+            if (homePPG === 0 && awayPPG === 0) warnings.push('Both teams have 0.0 PPG - new season or no data available');
+            else if (homePPG === 0 || awayPPG === 0) warnings.push('One team has 0.0 PPG - incomplete data, using default values');
+            if (homePPG > 3.0 || awayPPG > 3.0) warnings.push('Elite form detected (PPG > 3.0) - values capped for calculation');
+            if (homePPG < 0 || awayPPG < 0) warnings.push('Negative PPG detected - using absolute values');
+            return warnings.length > 0 ? warnings.join('; ') : null;
+        }
+
+        // ============================================
+        // STRATEGY FUNCTIONS
+        // ============================================
+        
+        /**
+         * Generate pattern identifier for tracking performance
+         * Format: A_Over_moderate, B_Under_close, etc.
+         */
+        function generatePatternId(confidenceTier, predictionType, ppgSpreadCategory) {
+            const betType = getBetType(predictionType);
+            return `${confidenceTier}_${betType}_${ppgSpreadCategory}`;
+        }
+        
+        /**
+         * Calculate stake size based on confidence, pattern, and PPG spread
+         */
+        function calculateStake(confidence, patternId, ppgSpread) {
+            let stake = 1.0; // base unit
+            
+            // Reduce stake for risky patterns
+            if (ppgSpread.category === 'extreme') stake *= 0.5;
+            if (getConfidenceTier(confidence) === 'C') stake *= 0.3;
+            
+            // Increase stake for proven patterns
+            if (PRIORITY_PATTERNS.includes(patternId)) stake *= 1.5;
+            if (confidence >= 80 && ppgSpread.category === 'moderate') stake *= 1.3;
+            
+            return Math.min(stake, 2.0); // cap at 2 units
+        }
+        
+        /**
+         * Apply strategy filters to determine if bet should be placed
+         */
+        function applyStrategyFilters(patternId, confidence, ppgSpread, expGoals) {
+            const tier = getConfidenceTier(confidence);
+            
+            // Check blacklisted patterns (never bet these)
+            if (BLACKLISTED_PATTERNS.includes(patternId)) {
+                return {
+                    bet: false,
+                    reason: `Pattern ${patternId} has historically negative ROI (${PATTERN_ROI[patternId] || '-'}%)`,
+                    alternative: suggestAlternative(ppgSpread, expGoals),
+                    riskLevel: 'high',
+                    stake: 0
+                };
+            }
+            
+            // Check priority patterns (always bet these)
+            if (PRIORITY_PATTERNS.includes(patternId)) {
+                const stake = calculateStake(confidence, patternId, ppgSpread);
+                return {
+                    bet: true,
+                    stake: stake,
+                    reason: `High-performing pattern: ${patternId} (${PATTERN_ROI[patternId]}% ROI)`,
+                    confidence: Math.min(confidence + 5, 95),
+                    riskLevel: 'low',
+                    expectedWinRate: PATTERN_WIN_RATES[patternId] || '60-65%'
+                };
+            }
+            
+            // Tier C rejection (insufficient edge)
+            if (tier === 'C') {
+                return {
+                    bet: false,
+                    reason: 'Confidence below 60% - insufficient edge for profitable betting',
+                    riskLevel: 'high',
+                    stake: 0,
+                    alternative: 'Wait for more favorable conditions or live odds'
+                };
+            }
+            
+            // Close spread caution for Tier B
+            if (ppgSpread.category === 'close' && tier === 'B') {
+                return {
+                    bet: false,
+                    reason: 'Close PPG spread with medium confidence shows -8% historical ROI',
+                    alternative: 'Wait for live odds or more data',
+                    riskLevel: 'medium',
+                    stake: 0
+                };
+            }
+            
+            // Extreme spread caution
+            if (ppgSpread.category === 'extreme') {
+                const stake = calculateStake(confidence, patternId, ppgSpread);
+                return {
+                    bet: true,
+                    stake: stake,
+                    reason: 'Extreme spread - reduced stake recommended',
+                    riskLevel: 'medium',
+                    expectedWinRate: '55-60%'
+                };
+            }
+            
+            // Default: moderate confidence
+            const stake = calculateStake(confidence, patternId, ppgSpread);
+            return {
+                bet: true,
+                stake: stake,
+                reason: 'Meets basic criteria - standard stake',
+                riskLevel: 'medium',
+                expectedWinRate: PATTERN_WIN_RATES[patternId] || '58-62%'
+            };
+        }
+        
+        /**
+         * Suggest alternative betting approach when primary is rejected
+         */
+        function suggestAlternative(ppgSpread, expGoals) {
+            if (ppgSpread.category === 'extreme') {
+                return 'Consider live betting after 15-20 minutes';
+            }
+            if (expGoals > 2.8) {
+                return 'Consider BTTS market instead';
+            }
+            if (expGoals < 2.2) {
+                return 'Consider Under 2.5 if odds favorable';
+            }
+            return 'Wait for live odds or more data';
+        }
+        
+        /**
+         * Display strategy recommendation in the UI
+         */
+        function displayStrategyRecommendation(strategyCheck, patternId) {
+            const strategyBox = document.getElementById('strategyRecommendation');
+            const verdictBadge = document.getElementById('strategyVerdict');
+            const patternBadge = document.getElementById('patternId');
+            const reasonDiv = document.getElementById('strategyReason');
+            const stakeDiv = document.getElementById('stakeRecommendation');
+            const riskBadge = document.getElementById('riskLevel');
+            const altDiv = document.getElementById('alternativeBet');
+            const altText = document.getElementById('altText');
+            const winRateDiv = document.getElementById('expectedWinRate');
+            
+            strategyBox.style.display = 'block';
+            patternBadge.textContent = patternId;
+            reasonDiv.textContent = strategyCheck.reason;
+            
+            // Set verdict badge
+            if (strategyCheck.bet) {
+                verdictBadge.textContent = 'BET';
+                verdictBadge.className = 'verdict-badge bet';
+                strategyBox.className = 'strategy-box bet-allowed';
+                stakeDiv.textContent = `Recommended stake: ${strategyCheck.stake.toFixed(1)} units`;
+                stakeDiv.style.display = 'block';
+                
+                // Show expected win rate
+                if (strategyCheck.expectedWinRate) {
+                    winRateDiv.innerHTML = `Expected win rate: <span>${strategyCheck.expectedWinRate}</span>`;
+                    winRateDiv.style.display = 'block';
+                }
+            } else {
+                verdictBadge.textContent = 'NO BET';
+                verdictBadge.className = 'verdict-badge no-bet';
+                strategyBox.className = 'strategy-box bet-rejected';
+                stakeDiv.style.display = 'none';
+                winRateDiv.style.display = 'none';
+            }
+            
+            // Set risk level
+            riskBadge.textContent = strategyCheck.riskLevel.toUpperCase() + ' RISK';
+            riskBadge.className = 'risk-level risk-' + strategyCheck.riskLevel;
+            
+            // Show alternative if available
+            if (strategyCheck.alternative) {
+                altDiv.style.display = 'block';
+                altText.textContent = strategyCheck.alternative;
+            } else {
+                altDiv.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // PATTERN PERFORMANCE TRACKING
+        // ============================================
+        
+        /**
+         * Update pattern-specific statistics
+         */
+        function updatePatternStats(patternId, result) {
+            const stats = JSON.parse(localStorage.getItem('fs_patternStats') || '{}');
+            if (!stats[patternId]) {
+                stats[patternId] = { total: 0, won: 0, lost: 0, roi: 0 };
+            }
+            stats[patternId].total++;
+            if (result === 'won') {
+                stats[patternId].won++;
+            } else if (result === 'lost') {
+                stats[patternId].lost++;
+            }
+            
+            // Calculate ROI (assuming average odds of 1.85)
+            const avgOdds = 1.85;
+            const won = stats[patternId].won;
+            const total = stats[patternId].total;
+            const profit = (won * avgOdds) - total;
+            stats[patternId].roi = ((profit / total) * 100).toFixed(1);
+            
+            localStorage.setItem('fs_patternStats', JSON.stringify(stats));
+        }
+        
+        /**
+         * Get pattern statistics
+         */
+        function getPatternStats() {
+            return JSON.parse(localStorage.getItem('fs_patternStats') || '{}');
+        }
+        
+        /**
+         * Render pattern performance dashboard
+         */
+        function renderPatternDashboard() {
+            const stats = getPatternStats();
+            const grid = document.getElementById('patternStatsGrid');
+            const bestPattern = document.getElementById('bestPattern');
+            const worstPattern = document.getElementById('worstPattern');
+            const currentEdge = document.getElementById('currentPatternEdge');
+            
+            if (Object.keys(stats).length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#8b949e;padding:20px;">No pattern data yet. Save predictions to history to track performance.</div>';
+                bestPattern.textContent = '-';
+                worstPattern.textContent = '-';
+                currentEdge.textContent = '-';
+                return;
+            }
+            
+            // Sort patterns by ROI
+            const sortedPatterns = Object.entries(stats)
+                .filter(([_, data]) => data.total >= 3) // Only show patterns with 3+ bets
+                .sort((a, b) => parseFloat(b[1].roi) - parseFloat(a[1].roi));
+            
+            // Render pattern grid
+            grid.innerHTML = sortedPatterns.map(([patternId, data]) => {
+                const winRate = Math.round((data.won / data.total) * 100);
+                const roiClass = parseFloat(data.roi) > 0 ? 'positive' : parseFloat(data.roi) < 0 ? 'negative' : 'neutral';
+                const roiSign = parseFloat(data.roi) > 0 ? '+' : '';
+                
+                return `
+                    <div class="pattern-item ${roiClass}">
+                        <div class="pattern-name">${patternId}</div>
+                        <div class="pattern-stats">${data.won}/${data.total} (${winRate}%)</div>
+                        <div class="pattern-roi ${roiClass}">${roiSign}${data.roi}% ROI</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update summary
+            if (sortedPatterns.length > 0) {
+                bestPattern.textContent = sortedPatterns[0][0] + ' (' + sortedPatterns[0][1].roi + '%)';
+                worstPattern.textContent = sortedPatterns[sortedPatterns.length - 1][0] + ' (' + sortedPatterns[sortedPatterns.length - 1][1].roi + '%)';
+                
+                // Calculate overall edge
+                const totalBets = Object.values(stats).reduce((sum, s) => sum + s.total, 0);
+                const totalWon = Object.values(stats).reduce((sum, s) => sum + s.won, 0);
+                const overallWinRate = totalBets > 0 ? (totalWon / totalBets * 100).toFixed(1) : 0;
+                currentEdge.textContent = overallWinRate + '%';
+            }
+        }
+        
+        /**
+         * Show pattern dashboard
+         */
+        function showPatternDashboard() {
+            const card = document.getElementById('patternPerformanceCard');
+            card.style.display = 'block';
+            renderPatternDashboard();
+            card.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============================================
+        // BACKTEST FUNCTION
+        // ============================================
+        
+        /**
+         * Run backtest on major leagues sample data
+         */
+        function runBacktest() {
+            // Sample data representing major leagues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1)
+            const backtestData = generateBacktestData();
+            
+            let baselineWins = 0;
+            let strategyWins = 0;
+            let strategyBets = 0;
+            const leagueResults = {};
+            
+            backtestData.forEach(match => {
+                // Simulate baseline prediction (without strategy filters)
+                const baselineCorrect = simulateBaselinePrediction(match);
+                if (baselineCorrect) baselineWins++;
+                
+                // Simulate strategy prediction (with filters)
+                const strategyResult = simulateStrategyPrediction(match);
+                if (strategyResult.placed) {
+                    strategyBets++;
+                    if (strategyResult.won) strategyWins++;
+                }
+                
+                // Track by league
+                if (!leagueResults[match.league]) {
+                    leagueResults[match.league] = { total: 0, wins: 0 };
+                }
+                leagueResults[match.league].total++;
+                if (baselineCorrect) leagueResults[match.league].wins++;
+            });
+            
+            const baselineRate = (baselineWins / backtestData.length * 100).toFixed(1);
+            const strategyRate = strategyBets > 0 ? (strategyWins / strategyBets * 100).toFixed(1) : 0;
+            
+            // Display results
+            document.getElementById('baselineWinRate').textContent = baselineRate + '%';
+            document.getElementById('strategyWinRate').textContent = strategyRate + '%';
+            document.getElementById('backtestTotal').textContent = backtestData.length;
+            document.getElementById('betsPlaced').textContent = strategyBets;
+            
+            // Display league breakdown
+            const leagueContainer = document.getElementById('leagueResults');
+            leagueContainer.innerHTML = Object.entries(leagueResults).map(([league, data]) => {
+                const rate = (data.wins / data.total * 100).toFixed(1);
+                return `
+                    <div class="backtest-league">
+                        <span class="backtest-league-name">${league}</span>
+                        <span class="backtest-league-rate">${rate}%</span>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('backtestCard').style.display = 'block';
+            document.getElementById('backtestCard').scrollIntoView({ behavior: 'smooth' });
+            
+            console.log('Backtest completed:', {
+                totalMatches: backtestData.length,
+                baselineWinRate: baselineRate + '%',
+                strategyWinRate: strategyRate + '%',
+                betsPlaced: strategyBets,
+                improvement: (strategyRate - baselineRate).toFixed(1) + '%'
+            });
+        }
+        
+        /**
+         * Generate realistic backtest data for major leagues
+         */
+        function generateBacktestData() {
+            const leagues = ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'];
+            const data = [];
+            
+            // Generate 500 sample matches with realistic stats
+            for (let i = 0; i < 500; i++) {
+                const league = leagues[Math.floor(Math.random() * leagues.length)];
+                
+                // Generate realistic PPG values
+                const homePPG = 0.8 + Math.random() * 1.8; // 0.8 to 2.6
+                const awayPPG = 0.8 + Math.random() * 1.5; // 0.8 to 2.3
+                
+                // Generate other stats based on PPG
+                const hScored = 0.8 + (homePPG * 0.5) + (Math.random() * 0.6);
+                const hConceded = Math.max(0.5, 1.8 - (homePPG * 0.4) + (Math.random() * 0.5));
+                const aScored = 0.7 + (awayPPG * 0.45) + (Math.random() * 0.6);
+                const aConceded = Math.max(0.5, 1.8 - (awayPPG * 0.4) + (Math.random() * 0.5));
+                
+                // Determine actual result (goals)
+                const hGoals = Math.round(hScored + (Math.random() * 2 - 0.5));
+                const aGoals = Math.round(aScored + (Math.random() * 2 - 0.5));
+                
+                data.push({
+                    league,
+                    homePPG,
+                    awayPPG,
+                    hScored,
+                    hConceded,
+                    aScored,
+                    aConceded,
+                    hGoals: Math.max(0, hGoals),
+                    aGoals: Math.max(0, aGoals),
+                    totalGoals: Math.max(0, hGoals) + Math.max(0, aGoals),
+                    btts: hGoals > 0 && aGoals > 0
+                });
+            }
+            
+            return data;
+        }
+        
+        /**
+         * Simulate baseline prediction (without strategy filters)
+         */
+        function simulateBaselinePrediction(match) {
+            const expGoals = (match.hScored + match.aScored) * 0.6 + (match.hConceded + match.aConceded) * 0.4;
+            const ppgDiff = match.homePPG - match.awayPPG;
+            
+            // Simple prediction logic
+            let prediction;
+            if (expGoals > 2.6) prediction = 'over';
+            else if (expGoals < 2.3) prediction = 'under';
+            else if (Math.abs(ppgDiff) > 0.6) prediction = ppgDiff > 0 ? 'home' : 'away';
+            else prediction = 'btts';
+            
+            // Check if prediction was correct
+            if (prediction === 'over') return match.totalGoals > 2.5;
+            if (prediction === 'under') return match.totalGoals < 2.5;
+            if (prediction === 'home') return match.hGoals > match.aGoals;
+            if (prediction === 'away') return match.aGoals > match.hGoals;
+            if (prediction === 'btts') return match.btts;
+            return false;
+        }
+        
+        /**
+         * Simulate strategy prediction (with filters)
+         */
+        function simulateStrategyPrediction(match) {
+            const expGoals = (match.hScored + match.aScored) * 0.6 + (match.hConceded + match.aConceded) * 0.4;
+            const ppgSpread = classifyPPGSpread(match.homePPG, match.awayPPG);
+            
+            // Determine prediction type
+            let prediction, confidence;
+            if (expGoals > 2.6) {
+                prediction = 'over';
+                confidence = 65 + (expGoals - 2.6) * 15;
+            } else if (expGoals < 2.3) {
+                prediction = 'under';
+                confidence = 65 + (2.3 - expGoals) * 15;
+            } else {
+                prediction = 'straight';
+                confidence = 60;
+            }
+            
+            confidence = Math.min(95, Math.max(50, confidence));
+            
+            // Generate pattern ID
+            const tier = getConfidenceTier(confidence);
+            const patternId = generatePatternId(tier, prediction, ppgSpread.category);
+            
+            // Apply strategy filters
+            const strategyCheck = applyStrategyFilters(patternId, confidence, ppgSpread, expGoals);
+            
+            if (!strategyCheck.bet) {
+                return { placed: false, won: false };
+            }
+            
+            // Check if prediction was correct
+            let won = false;
+            if (prediction === 'over') won = match.totalGoals > 2.5;
+            else if (prediction === 'under') won = match.totalGoals < 2.5;
+            else if (prediction === 'straight') won = match.hGoals > match.aGoals;
+            
+            return { placed: true, won };
+        }
+
+        // ============================================
+        // FORM & FEATURE FUNCTIONS
+        // ============================================
+        
+        function calculateForm(scored, conceded, ppg) {
+            const goalDiff = scored - conceded;
+            const formScore = (goalDiff * 0.4) + (ppg * 0.6);
+            if (formScore > 0.8) return { state: 'up', icon: '▲', text: 'Rising', class: 'form-rising' };
+            if (formScore < 0.2) return { state: 'down', icon: '▼', text: 'Falling', class: 'form-falling' };
+            return { state: 'flat', icon: '→', text: 'Stable', class: 'form-stable' };
+        }
+        
+        function updateFormDisplay() {
+            const hScored = parseFloat(document.getElementById('hScored').value) || 0;
+            const hConceded = parseFloat(document.getElementById('hConceded').value) || 0;
+            const hPPG = parseFloat(document.getElementById('hPPG').value) || 0;
+            const aScored = parseFloat(document.getElementById('aScored').value) || 0;
+            const aConceded = parseFloat(document.getElementById('aConceded').value) || 0;
+            const aPPG = parseFloat(document.getElementById('aPPG').value) || 0;
+            
+            const homeForm = calculateForm(hScored, hConceded, hPPG);
+            const awayForm = calculateForm(aScored, aConceded, aPPG);
+            
+            document.getElementById('homeFormValue').innerHTML = `${homeForm.icon} ${homeForm.text}`;
+            document.getElementById('homeFormValue').className = `form-value ${homeForm.class}`;
+            document.getElementById('awayFormValue').innerHTML = `${awayForm.icon} ${awayForm.text}`;
+            document.getElementById('awayFormValue').className = `form-value ${awayForm.class}`;
+        }
+        
+        function calculateExpectedGoals(homeStats, awayStats, ppgSpreadCategory) {
+            let baseGoals = (homeStats.scored + awayStats.scored) * 0.6 + (homeStats.conceded + awayStats.conceded) * 0.4;
+            
+            switch(ppgSpreadCategory.category) {
+                case 'close': baseGoals *= 1.15; break;
+                case 'moderate': baseGoals *= 1.05; break;
+                case 'large':
+                    const favorite = homeStats.ppg > awayStats.ppg ? homeStats : awayStats;
+                    if (favorite.scored > 1.5 && favorite.conceded > 0.8) { 
+                        baseGoals *= 1.20; 
+                        ppgSpreadCategory.favoriteStyle = 'attacking'; 
+                    } else { 
+                        baseGoals *= 0.85; 
+                        ppgSpreadCategory.favoriteStyle = 'controlling'; 
+                    }
+                    break;
+                case 'extreme': baseGoals *= 0.90; break;
+            }
+            
+            return Math.min(Math.max(baseGoals, 0.5), 5.0);
+        }
+        
+        function quickScanSignals(homeStats, awayStats) {
+            const spread = Math.abs(homeStats.ppg - awayStats.ppg);
+            const bothHighOver25 = homeStats.over25 > 0.6 && awayStats.over25 > 0.6;
+            const bothLowOver25 = homeStats.over25 < 0.4 && awayStats.over25 < 0.4;
+            const bothHighCS = homeStats.cleanSheet > 0.3 || awayStats.cleanSheet > 0.3;
+            
+            const overSignal = spread < 0.8 && bothHighOver25 ? 'STRONG' : spread < 1.2 && (homeStats.over25 > 0.55 || awayStats.over25 > 0.55) ? 'MODERATE' : 'WEAK';
+            const underSignal = spread > 1.5 && bothLowOver25 ? 'STRONG' : spread > 1.0 && bothHighCS ? 'MODERATE' : 'WEAK';
+            const bttsSignal = spread < 1.0 && homeStats.scored > 1.2 && awayStats.scored > 1.2 ? 'STRONG' : spread < 1.5 && (homeStats.btts > 0.5 || awayStats.btts > 0.5) ? 'MODERATE' : 'WEAK';
+            
+            return { overSignal, underSignal, bttsSignal };
+        }
+        
+        function generateFingerprint(homeStats, awayStats, context) {
+            const hForm = calculateForm(homeStats.scored, homeStats.conceded, homeStats.ppg);
+            const aForm = calculateForm(awayStats.scored, awayStats.conceded, awayStats.ppg);
+            const hCode = 'H' + homeStats.ppg.toFixed(1) + hForm.state.charAt(0).toUpperCase() + Math.round(homeStats.over25 * 100);
+            const aCode = 'A' + awayStats.ppg.toFixed(1) + aForm.state.charAt(0).toUpperCase() + Math.round(awayStats.over25 * 100);
+            return `${hCode}_${aCode}_O${context.expGoals.toFixed(1)}`;
+        }
+        
+        function findSimilarFingerprints(fingerprint) {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending' && h.fingerprint);
+            const basePattern = fingerprint.split('_').slice(0, 2).join('_');
+            const similar = completed.filter(h => h.fingerprint && h.fingerprint.split('_').slice(0, 2).join('_') === basePattern);
+            
+            if (similar.length < 5) return null;
+            const won = similar.filter(h => h.result === 'won').length;
+            return { count: similar.length, hitRate: Math.round((won / similar.length) * 100) };
+        }
+        
+        function getCurrentStreak() {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending');
+            if (completed.length === 0) return { type: null, count: 0 };
+            
+            let streak = 0, streakType = completed[0].result;
+            for (const item of completed) { 
+                if (item.result === streakType) streak++; 
+                else break; 
+            }
+            return { type: streakType, count: streak };
+        }
+        
+        function getStreakBadge() { 
+            const streak = getCurrentStreak(); 
+            return streak.count >= 4 && streak.type === 'won' ? '<span class="streak-badge streak-hot">++ Hot</span>' : streak.count >= 3 && streak.type === 'lost' ? '<span class="streak-badge streak-cold">-- Cold</span>' : ''; 
+        }
+
+        // ============================================
+        // LEARNING FUNCTIONS
+        // ============================================
+        
+        function identifyActiveFeatures(prediction, homeStats, awayStats, ppgSpread) {
+            const features = [];
+            const betType = getBetType(prediction);
+            
+            if (ppgSpread) {
+                features.push({ market: 'ppgSpread', feature: ppgSpread.category + 'Spread', weight: modelWeights.ppgSpread[ppgSpread.category + 'Spread'] || 0.25 });
+                if (ppgSpread.category === 'large' && ppgSpread.favoriteStyle) {
+                    const styleFeature = ppgSpread.favoriteStyle === 'attacking' ? 'largeSpreadAttacking' : 'largeSpreadControlling';
+                    features.push({ market: 'ppgSpread', feature: styleFeature, weight: modelWeights.ppgSpread[styleFeature] || 0.30 });
+                }
+            }
+            
+            if (betType === 'straight' || prediction.toLowerCase().includes('win')) {
+                features.push({ market: 'straight', feature: 'ppg', weight: modelWeights.straight.ppg });
+                features.push({ market: 'straight', feature: 'homeAdvantage', weight: modelWeights.straight.homeAdvantage });
+                if (homeStats.ppg > awayStats.ppg) features.push({ market: 'straight', feature: 'formTrajectory', weight: modelWeights.straight.formTrajectory });
+            } else if (betType === 'over' || betType === 'under') {
+                features.push({ market: 'overUnder', feature: 'xGoals', weight: modelWeights.overUnder.xGoals });
+                features.push({ market: 'overUnder', feature: 'over25Trend', weight: modelWeights.overUnder.over25Trend });
+            } else if (betType === 'btts') {
+                features.push({ market: 'btts', feature: 'attackReliability', weight: modelWeights.btts.attackReliability });
+                features.push({ market: 'btts', feature: 'bttsHistory', weight: modelWeights.btts.bttsHistory });
+            }
+            
+            return features;
+        }
+        
+        function updateWeights(prediction, result, homeStats, awayStats, ppgSpread) {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending');
+            const betType = getBetType(prediction);
+            const marketBets = completed.filter(h => getBetType(h.prediction) === betType);
+            
+            if (marketBets.length < 8) return;
+            
+            const features = identifyActiveFeatures(prediction, homeStats, awayStats, ppgSpread);
+            const multiplier = result === 'won' ? 1.06 : 0.90;
+            
+            features.forEach(f => { 
+                let newWeight = modelWeights[f.market][f.feature] * multiplier; 
+                newWeight = Math.max(0.05, Math.min(0.50, newWeight)); 
+                modelWeights[f.market][f.feature] = newWeight; 
+            });
+            
+            ['straight', 'overUnder', 'btts', 'ppgSpread'].forEach(market => { 
+                const total = Object.values(modelWeights[market]).reduce((s, v) => s + v, 0); 
+                Object.keys(modelWeights[market]).forEach(feature => { 
+                    modelWeights[market][feature] = parseFloat((modelWeights[market][feature] / total).toFixed(3)); 
+                }); 
+            });
+            
+            saveWeights(modelWeights);
+        }
+        
+        function applyWeeklyRegression() {
+            const lastRegression = localStorage.getItem('fs_lastRegression');
+            const now = new Date().toISOString();
+            
+            if (!lastRegression || (new Date(now) - new Date(lastRegression)) > 7 * 24 * 60 * 60 * 1000) {
+                ['straight', 'overUnder', 'btts', 'ppgSpread'].forEach(market => { 
+                    Object.keys(modelWeights[market]).forEach(feature => { 
+                        const current = modelWeights[market][feature];
+                        const baseline = baselineWeights[market][feature];
+                        const drift = Math.abs(current - baseline) / baseline;
+                        if (drift > 0.30) modelWeights[market][feature] = current + (baseline - current) * 0.10;
+                    });
+                });
+                saveWeights(modelWeights);
+                localStorage.setItem('fs_lastRegression', now);
+            }
+        }
+        
+        function disagreeWithPrediction() {
+            if (!currentPrediction) return;
+            
+            const disagreements = JSON.parse(localStorage.getItem('fs_disagreements') || '[]');
+            disagreements.push({ prediction: currentPrediction, fingerprint: currentPrediction.fingerprint, timestamp: Date.now() });
+            localStorage.setItem('fs_disagreements', JSON.stringify(disagreements));
+            
+            const homeStats = { ppg: getVal('hPPG'), scored: getVal('hScored'), conceded: getVal('hConceded'), over25: getPct('hOver25') };
+            const awayStats = { ppg: getVal('aPPG'), scored: getVal('aScored'), conceded: getVal('aConceded'), over25: getPct('aOver25') };
+            const features = identifyActiveFeatures(currentPrediction.prediction, homeStats, awayStats, currentPrediction.ppgSpread);
+            
+            features.forEach(f => { modelWeights[f.market][f.feature] *= 0.88; });
+            
+            ['straight', 'overUnder', 'btts', 'ppgSpread'].forEach(market => { 
+                const total = Object.values(modelWeights[market]).reduce((s, v) => s + v, 0); 
+                Object.keys(modelWeights[market]).forEach(feature => { 
+                    modelWeights[market][feature] = parseFloat((modelWeights[market][feature] / total).toFixed(3)); 
+                }); 
+            });
+            
+            saveWeights(modelWeights);
+            renderWeightDisplay();
+            alert('Disagreement recorded. Model weights adjusted.');
+        }
+        
+        function checkBlindSpot(fingerprint) { 
+            const disagreements = JSON.parse(localStorage.getItem('fs_disagreements') || '[]'); 
+            return disagreements.filter(d => d.fingerprint === fingerprint).length >= 3; 
+        }
+        
+        function calculateModelEdge() { 
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending');
+            if (completed.length === 0) return 0;
+            const won = completed.filter(h => h.result === 'won').length;
+            return ((won / completed.length) * 100 - 50).toFixed(1);
+        }
+        
+        function calculateLearningVelocity() { 
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending');
+            if (completed.length < 20) return null;
+            
+            const recent = completed.slice(0, 10);
+            const older = completed.slice(10, 20);
+            const recentWinRate = recent.filter(h => h.result === 'won').length / recent.length;
+            const olderWinRate = older.filter(h => h.result === 'won').length / older.length;
+            const velocity = ((recentWinRate - olderWinRate) * 100).toFixed(1);
+            return velocity > 0 ? `+${velocity}%` : `${velocity}%`;
+        }
+        
+        function calculatePPGSpreadPerformance() {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const completed = history.filter(h => h.result !== 'pending' && h.ppgSpread);
+            const spreadPerformance = { close: { total: 0, won: 0 }, moderate: { total: 0, won: 0 }, large: { total: 0, won: 0 }, extreme: { total: 0, won: 0 } };
+            
+            completed.forEach(h => { 
+                if (spreadPerformance[h.ppgSpread.category]) { 
+                    spreadPerformance[h.ppgSpread.category].total++; 
+                    if (h.result === 'won') spreadPerformance[h.ppgSpread.category].won++; 
+                } 
+            });
+            
+            return spreadPerformance;
+        }
+        
+        function renderPPGSpreadPerformance() {
+            const performance = calculatePPGSpreadPerformance();
+            const categories = ['close', 'moderate', 'large', 'extreme'];
+            const displayNames = { close: 'ppgClose', moderate: 'ppgModerate', large: 'ppgLarge', extreme: 'ppgExtreme' };
+            let hasBlindSpot = false;
+            
+            categories.forEach(cat => {
+                const data = performance[cat];
+                const rateElem = document.getElementById(displayNames[cat] + 'Rate');
+                const countElem = document.getElementById(displayNames[cat] + 'Count');
+                const boxElem = rateElem ? rateElem.closest('.ppg-cat-box') : null;
+                
+                if (data.total > 0) { 
+                    const winRate = Math.round((data.won / data.total) * 100); 
+                    rateElem.textContent = winRate + '%'; 
+                    countElem.textContent = data.total + ' bets'; 
+                    if (winRate < 40 && data.total >= 5) { 
+                        hasBlindSpot = true; 
+                        if (boxElem) boxElem.classList.add('ppg-cat-warning'); 
+                    } else if (boxElem) boxElem.classList.remove('ppg-cat-warning'); 
+                } else { 
+                    rateElem.textContent = '-'; 
+                    countElem.textContent = '0 bets'; 
+                    if (boxElem) boxElem.classList.remove('ppg-cat-warning'); 
+                }
+            });
+            
+            document.getElementById('ppgBlindSpotWarning').style.display = hasBlindSpot ? 'block' : 'none';
+        }
+        
+        function generatePPGWhyContent(homeStats, awayStats, ppgSpread) {
+            const items = [
+                { feature: 'PPG Spread Category', weight: 0.20, detail: `${ppgSpread.category.toUpperCase()} (${ppgSpread.spread.toFixed(2)} difference)` },
+                { feature: 'Competitiveness Index', weight: 0.15, detail: `${ppgSpread.competitivenessIndex}/100 - ${ppgSpread.expectedDynamic.replace('_', ' ')}` }
+            ];
+            
+            if (ppgSpread.category === 'large') { 
+                const favorite = homeStats.ppg > awayStats.ppg ? homeStats : awayStats;
+                const style = ppgSpread.favoriteStyle === 'attacking' ? 'Attacking' : 'Controlling';
+                items.push({ feature: 'Favorite Style', weight: 0.15, detail: `${style} (${favorite.scored.toFixed(1)} scored, ${favorite.conceded.toFixed(1)} conceded)` }); 
+            }
+            
+            return items;
+        }
+
+        // ============================================
+        // MAIN PREDICTION FUNCTION
+        // ============================================
+        
+        function predict() {
+            applyWeeklyRegression();
+            
+            const hTeam = document.getElementById('homeTeam').value || 'Home';
+            const aTeam = document.getElementById('awayTeam').value || 'Away';
+            document.getElementById('homeHeader').textContent = hTeam;
+            document.getElementById('awayHeader').textContent = aTeam;
+            
+            const hPPG = getVal('hPPG'), aPPG = getVal('aPPG');
+            const hScored = getVal('hScored'), aScored = getVal('aScored');
+            const hConc = getVal('hConceded'), aConc = getVal('aConceded');
+            const hOver = getPct('hOver25'), aOver = getPct('aOver25');
+            const hBTTS = getPct('hBTTS'), aBTTS = getPct('aBTTS');
+            const hCS = getPct('hCS'), aCS = getPct('aCS');
+            
+            const ppgSpread = classifyPPGSpread(hPPG, aPPG);
+            const homeStats = { ppg: ppgSpread.homePPG, scored: hScored, conceded: hConc, over25: hOver, btts: hBTTS, cleanSheet: hCS };
+            const awayStats = { ppg: ppgSpread.awayPPG, scored: aScored, conceded: aConc, over25: aOver, btts: aBTTS, cleanSheet: aCS };
+            const expGoals = calculateExpectedGoals(homeStats, awayStats, ppgSpread);
+            const quickScan = quickScanSignals(homeStats, awayStats);
+            const ppgColorClass = getPPGColorClass(ppgSpread.homePPG, ppgSpread.awayPPG);
+            
+            // Update stats table
+            document.getElementById('tHPPG').textContent = ppgSpread.homePPG.toFixed(2);
+            document.getElementById('tAPPG').textContent = ppgSpread.awayPPG.toFixed(2);
+            document.getElementById('tHPPG').className = 'home-stat ' + ppgColorClass;
+            document.getElementById('tAPPG').className = 'away-stat ' + ppgColorClass;
+            document.getElementById('tHScored').textContent = hScored.toFixed(2);
+            document.getElementById('tAScored').textContent = aScored.toFixed(2);
+            document.getElementById('tHConc').textContent = hConc.toFixed(2);
+            document.getElementById('tAConc').textContent = aConc.toFixed(2);
+            document.getElementById('tHOver').textContent = Math.round(hOver * 100) + '%';
+            document.getElementById('tAOver').textContent = Math.round(aOver * 100) + '%';
+            document.getElementById('tHBTTS').textContent = Math.round(hBTTS * 100) + '%';
+            document.getElementById('tABTTS').textContent = Math.round(aBTTS * 100) + '%';
+            document.getElementById('tHCS').textContent = Math.round(hCS * 100) + '%';
+            document.getElementById('tACS').textContent = Math.round(aCS * 100) + '%';
+            
+            const avgOver = (hOver + aOver) / 2;
+            const avgBTTS = (hBTTS + aBTTS) / 2;
+            const ppgDiff = ppgSpread.homePPG - ppgSpread.awayPPG;
+            
+            const oddsOver = getVal('oddsOver') || 1.85;
+            const oddsUnder = getVal('oddsUnder') || 1.95;
+            const oddsBTTS = getVal('oddsBTTS') || 1.75;
+            const odds1 = getVal('odds1') || 2.0;
+            const oddsX = getVal('oddsX') || 3.4;
+            const odds2 = getVal('odds2') || 3.5;
+            
+            const homeForm = calculateForm(hScored, hConc, ppgSpread.homePPG);
+            const formBoost = homeForm.state === 'up' ? 5 : homeForm.state === 'down' ? -5 : 0;
+            
+            let overProb = Math.min(avgOver * 100 + (expGoals > 2.5 ? 15 : 0) + formBoost, 85);
+            let underProb = 100 - overProb;
+            let bttsProb = Math.min(avgBTTS * 100 + (expGoals > 2.5 ? 10 : 0), 80);
+            let noBttsProb = 100 - bttsProb;
+            let homeWinProb = Math.min(Math.max(50 + (ppgDiff * 15) + (hScored - aConc) * 10 + formBoost, 15), 75);
+            let awayWinProb = Math.min(Math.max(50 - (ppgDiff * 15) + (aScored - hConc) * 10, 15), 75);
+            let drawProb = Math.max(0, 100 - homeWinProb - awayWinProb);
+            
+            if (ppgSpread.category === 'close') overProb = Math.min(overProb + 5, 95);
+            else if (ppgSpread.category === 'large') { 
+                if (ppgSpread.favoriteStyle === 'attacking') overProb = Math.min(overProb + 8, 95); 
+                else if (ppgSpread.favoriteStyle === 'controlling') underProb = Math.min(underProb + 12, 95); 
+            } else if (ppgSpread.category === 'extreme') { 
+                overProb = Math.max(overProb - 10, 30); 
+                underProb = Math.max(underProb - 10, 30); 
+            }
+            
+            const markets = [
+                { name: 'Over 2.5', prob: overProb, odds: oddsOver },
+                { name: 'Under 2.5', prob: underProb, odds: oddsUnder },
+                { name: 'BTTS Yes', prob: bttsProb, odds: oddsBTTS },
+                { name: 'BTTS No', prob: noBttsProb, odds: 2.0 },
+                { name: hTeam + ' Win', prob: homeWinProb, odds: odds1 },
+                { name: aTeam + ' Win', prob: awayWinProb, odds: odds2 },
+                { name: 'Draw', prob: drawProb, odds: oddsX }
+            ];
+            
+            markets.sort((a, b) => b.prob - a.prob);
+            
+            const topPick = markets[0];
+            let bestPred = topPick.name;
+            let bestOdds = topPick.odds;
+            let bestConf = topPick.prob;
+            let reason = '';
+            let activeFeatures = [];
+            
+            if (expGoals > 2.8) { 
+                bestPred = 'Over 2.5 Goals'; 
+                bestOdds = oddsOver; 
+                bestConf = Math.min(overProb, 80); 
+                reason = 'High scoring expected (' + expGoals.toFixed(1) + ' goals)';
+                activeFeatures = [{ feature: 'Expected Goals', weight: modelWeights.overUnder.xGoals }, { feature: 'Over 2.5 Trend', weight: modelWeights.overUnder.over25Trend }];
+            } else if (expGoals < 2.2) { 
+                bestPred = 'Under 2.5 Goals'; 
+                bestOdds = oddsUnder; 
+                bestConf = Math.min(underProb, 80); 
+                reason = 'Low scoring expected (' + expGoals.toFixed(1) + ' goals)';
+                activeFeatures = [{ feature: 'Expected Goals', weight: modelWeights.overUnder.xGoals }, { feature: 'Defensive Gaps', weight: modelWeights.overUnder.defensiveGaps }];
+            } else if (Math.abs(ppgDiff) > 0.8) { 
+                bestPred = ppgDiff > 0 ? hTeam + ' Win' : aTeam + ' Win'; 
+                bestOdds = ppgDiff > 0 ? odds1 : odds2; 
+                bestConf = Math.min(Math.abs(ppgDiff) * 35 + 45, 75); 
+                reason = 'Form advantage detected';
+                activeFeatures = [{ feature: 'PPG', weight: modelWeights.straight.ppg }, { feature: 'Form Trajectory', weight: modelWeights.straight.formTrajectory }, { feature: 'Home Advantage', weight: modelWeights.straight.homeAdvantage }];
+            } else { 
+                reason = 'Based on combined stats';
+                activeFeatures = [{ feature: 'Goals Balance', weight: modelWeights.straight.goalsBalance }, { feature: 'Defensive Stability', weight: modelWeights.straight.defensiveStability }];
+            }
+            
+            const streak = getCurrentStreak();
+            if (streak.count >= 4 && streak.type === 'won') bestConf = Math.min(bestConf + 3, 95);
+            else if (streak.count >= 3 && streak.type === 'lost') bestConf = Math.max(bestConf - 5, 30);
+            
+            const context = { expGoals };
+            const fingerprint = generateFingerprint(homeStats, awayStats, context);
+            const similar = findSimilarFingerprints(fingerprint);
+            
+            if (similar) { 
+                if (similar.hitRate > 65) bestConf = Math.min(bestConf + 6, 95); 
+                else if (similar.hitRate < 40) bestConf = Math.max(bestConf - 8, 30); 
+            }
+            
+            const isBlindSpot = checkBlindSpot(fingerprint);
+            const edgeCaseWarning = getPPGEdgeCaseWarning(hPPG, aPPG);
+            
+            // Update prediction display
+            document.getElementById('predType').textContent = bestPred;
+            document.getElementById('predOdds').textContent = '@' + bestOdds.toFixed(2);
+            document.getElementById('predReason').textContent = reason;
+            document.getElementById('confBar').style.width = bestConf + '%';
+            document.getElementById('confBar').className = 'confidence-fill ' + getConfBarClass(bestConf);
+            document.getElementById('confText').textContent = Math.round(bestConf) + '%';
+            document.getElementById('confText').className = getProbColorClass(bestConf);
+            
+            const valClass = getValueTagClass(bestConf);
+            const valText = getValueTagText(bestConf);
+            document.getElementById('valueTag').innerHTML = '<span class="value-tag ' + valClass + '">' + valText + '</span>' + getTierBadge(bestConf) + getStreakBadge();
+            
+            const patternDiv = document.getElementById('patternMatch');
+            if (similar) { 
+                patternDiv.style.display = 'block'; 
+                patternDiv.innerHTML = `Similar fixtures: ${similar.count} found, ${similar.hitRate}% hit rate`; 
+            } else patternDiv.style.display = 'none';
+            
+            // PPG spread indicator
+            const ppgIndicator = document.getElementById('ppgSpreadIndicator');
+            ppgIndicator.style.display = 'block';
+            document.getElementById('spreadLabel').textContent = `PPG Spread: ${ppgSpread.spread.toFixed(2)} - ${ppgSpread.category.charAt(0).toUpperCase() + ppgSpread.category.slice(1)}`;
+            document.getElementById('competitivenessIndex').textContent = ppgSpread.competitivenessIndex;
+            
+            const homeMarkerPos = Math.min((ppgSpread.homePPG / 3) * 100, 100);
+            const awayMarkerPos = Math.min((ppgSpread.awayPPG / 3) * 100, 100);
+            const minPos = Math.min(homeMarkerPos, awayMarkerPos);
+            const spreadWidth = Math.abs(homeMarkerPos - awayMarkerPos);
+            
+            document.getElementById('homePPGMarker').style.left = homeMarkerPos + '%';
+            document.getElementById('awayPPGMarker').style.left = awayMarkerPos + '%';
+            document.getElementById('spreadZone').style.left = minPos + '%';
+            document.getElementById('spreadZone').style.width = spreadWidth + '%';
+            document.getElementById('spreadZone').className = 'spread-zone spread-zone-' + ppgSpread.category;
+            
+            const signalTexts = { 
+                close: 'Competitive fixture - goals likely', 
+                moderate: 'Slight mismatch - monitor game state', 
+                large: 'Significant gap - check favorite\'s style', 
+                extreme: 'Extreme mismatch - avoid or live bet' 
+            };
+            const signalElem = document.getElementById('spreadSignal');
+            signalElem.textContent = signalTexts[ppgSpread.category];
+            signalElem.className = 'spread-signal spread-signal-' + ppgSpread.category;
+            
+            // Quick scan
+            const quickScanElem = document.getElementById('quickScan');
+            quickScanElem.style.display = 'block';
+            document.getElementById('scanSignals').innerHTML = `
+                <div class="scan-signal scan-signal-${quickScan.overSignal.toLowerCase()}">Over: ${quickScan.overSignal}</div>
+                <div class="scan-signal scan-signal-${quickScan.underSignal.toLowerCase()}">Under: ${quickScan.underSignal}</div>
+                <div class="scan-signal scan-signal-${quickScan.bttsSignal.toLowerCase()}">BTTS: ${quickScan.bttsSignal}</div>
+            `;
+            
+            // Warning flag
+            const warningFlag = document.getElementById('warningFlag');
+            if (edgeCaseWarning || ppgSpread.category === 'extreme') { 
+                warningFlag.style.display = 'flex'; 
+                document.getElementById('warningText').textContent = edgeCaseWarning || 'Extreme PPG spread - unpredictable outcome'; 
+            } else warningFlag.style.display = 'none';
+            
+            // Why section
+            const whySection = document.getElementById('whySection');
+            const whyContent = document.getElementById('whyContent');
+            whySection.style.display = 'block';
+            const ppgWhyContent = generatePPGWhyContent(homeStats, awayStats, ppgSpread);
+            const allWhyContent = [...activeFeatures.map(f => ({ feature: f.feature, weight: f.weight })), ...ppgWhyContent];
+            whyContent.innerHTML = allWhyContent.map(f => `<div class="why-item"><span class="why-feature">${f.feature}</span><span class="why-weight">${(f.weight * 100).toFixed(0)}%</span></div>`).join('');
+            if (isBlindSpot) whyContent.innerHTML += '<div class="blind-spot">! Blind spot detected - model has struggled with this pattern</div>';
+            
+            // All markets
+            let marketsHtml = '<table class="stats-table"><tr><th>Market</th><th>Prob</th><th>Odds</th></tr>';
+            markets.forEach(m => { 
+                const probClass = getProbColorClass(m.prob); 
+                marketsHtml += '<tr><td style="text-align:left">' + m.name + '</td><td class="' + probClass + '">' + Math.round(m.prob) + '%</td><td>@' + m.odds.toFixed(2) + '</td></tr>'; 
+            });
+            marketsHtml += '</table>';
+            document.getElementById('allMarkets').innerHTML = marketsHtml;
+            
+            // Generate pattern ID and apply strategy filters
+            const confidenceTier = getConfidenceTier(bestConf);
+            const patternId = generatePatternId(confidenceTier, bestPred, ppgSpread.category);
+            const strategyCheck = applyStrategyFilters(patternId, bestConf, ppgSpread, expGoals);
+            
+            // Display strategy recommendation
+            displayStrategyRecommendation(strategyCheck, patternId);
+            
+            // Store current prediction
+            currentPrediction = { 
+                home: hTeam, 
+                away: aTeam, 
+                prediction: bestPred, 
+                odds: bestOdds, 
+                prob: Math.round(bestConf), 
+                result: 'pending', 
+                betType: getBetType(bestPred), 
+                goalsHome: '', 
+                goalsAway: '', 
+                fingerprint, 
+                activeFeatures, 
+                ppgSpread, 
+                patternId,
+                strategyCheck,
+                timestamp: Date.now() 
+            };
+            
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============================================
+        // HISTORY FUNCTIONS
+        // ============================================
+        
+        function saveToHistory() {
+            if (!currentPrediction) return;
+            
+            let history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            currentPrediction.id = Date.now();
+            currentPrediction.date = new Date().toLocaleDateString();
+            
+            // Add pattern ID if not present
+            if (!currentPrediction.patternId) {
+                currentPrediction.patternId = generatePatternId(
+                    getConfidenceTier(currentPrediction.prob),
+                    currentPrediction.prediction,
+                    currentPrediction.ppgSpread.category
+                );
+            }
+            
+            history.unshift(currentPrediction);
+            localStorage.setItem('fs_history', JSON.stringify(history));
+            
+            // Update pattern stats
+            updatePatternStats(currentPrediction.patternId, 'pending');
+            
+            renderHistory();
+            renderBetTracking();
+            renderModelLearning();
+        }
+        
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const container = document.getElementById('historyList');
+            const card = document.getElementById('historyCard');
+            
+            if (history.length === 0) { 
+                card.style.display = 'none'; 
+                return; 
+            }
+            card.style.display = 'block';
+            
+            const total = history.length;
+            const won = history.filter(h => h.result === 'won').length;
+            const lost = history.filter(h => h.result === 'lost').length;
+            const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
+            
+            document.getElementById('totalPreds').textContent = total;
+            document.getElementById('wonPreds').textContent = won;
+            document.getElementById('lostPreds').textContent = lost;
+            document.getElementById('winRate').textContent = winRate + '%';
+            
+            let filteredHistory = history;
+            if (currentFilter !== 'all') {
+                filteredHistory = currentFilter === 'closeppg' 
+                    ? history.filter(h => h.ppgSpread && h.ppgSpread.category === 'close') 
+                    : history.filter(h => h.betType === currentFilter);
+            }
+            
+            container.innerHTML = filteredHistory.map(h => {
+                const watermarkClass = h.result === 'won' ? 'watermark-won' : h.result === 'lost' ? 'watermark-lost' : 'watermark-pending';
+                const glowClass = h.result === 'won' ? 'card-glow-won' : h.result === 'lost' ? 'card-glow-lost' : '';
+                const watermarkText = h.result === 'pending' ? 'PENDING' : h.result.toUpperCase();
+                const goalsInput = h.result !== 'pending' 
+                    ? `value="${h.goalsHome !== undefined ? h.goalsHome : ''}" disabled` 
+                    : `value="" onchange="updateGoals(${h.id},'home',this.value)"`;
+                const goalsAwayInput = h.result !== 'pending' 
+                    ? `value="${h.goalsAway !== undefined ? h.goalsAway : ''}" disabled` 
+                    : `value="" onchange="updateGoals(${h.id},'away',this.value)"`;
+                const tierBadge = getTierBadge(h.prob);
+                const fingerprint = h.fingerprint ? `<div class="fingerprint">${h.fingerprint}</div>` : '';
+                const ppgSpreadBadge = getPPGSpreadBadge(h.ppgSpread);
+                const patternIdDisplay = h.patternId ? `<div class="pattern-id-display">${h.patternId}</div>` : '';
+                
+                return `
+                    <div class="history-item ${glowClass}">
+                        ${h.result !== 'pending' ? `<div class="watermark ${watermarkClass}">${watermarkText}</div>` : ''}
+                        <div class="history-header">
+                            <span class="history-teams">${h.home} vs ${h.away}</span>
+                            <span class="history-date">${h.date}</span>
+                        </div>
+                        <div class="history-pred">${h.prediction} @${h.odds.toFixed(2)} (${h.prob}%) ${tierBadge} ${getBetTypeTag(h.betType)} ${ppgSpreadBadge}</div>
+                        ${patternIdDisplay}
+                        ${fingerprint}
+                        <div class="goals-row">Goals: <input type="number" class="goals-input" placeholder="H" ${goalsInput}> - <input type="number" class="goals-input" placeholder="A" ${goalsAwayInput}></div>
+                        <div class="history-actions">
+                            <button class="status-btn status-won-btn" onclick="updateResult(${h.id},'won')">Won</button>
+                            <button class="status-btn status-lost-btn" onclick="updateResult(${h.id},'lost')">Lost</button>
+                            <button class="delete-btn" onclick="deleteHistory(${h.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterHistory(filter) { 
+            currentFilter = filter; 
+            document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active')); 
+            event.target.classList.add('active'); 
+            renderHistory(); 
+        }
+        
+        function updateResult(id, result) {
+            let history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const item = history.find(h => h.id === id);
+            
+            if (item) { 
+                const oldResult = item.result;
+                item.result = result;
+                
+                // Update pattern stats
+                if (item.patternId) {
+                    updatePatternStats(item.patternId, result);
+                }
+                
+                if (oldResult === 'pending') { 
+                    const homeStats = { ppg: 0, scored: 0, conceded: 0, over25: 0 };
+                    const awayStats = { ppg: 0, scored: 0, conceded: 0, over25: 0 };
+                    updateWeights(item.prediction, result, homeStats, awayStats, item.ppgSpread);
+                    renderWeightDisplay();
+                }
+                
+                localStorage.setItem('fs_history', JSON.stringify(history));
+                renderHistory();
+                renderBetTracking();
+                renderModelLearning();
+                renderPatternDashboard();
+            }
+        }
+        
+        function updateGoals(id, team, value) { 
+            let history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const item = history.find(h => h.id === id);
+            if (item) { 
+                if (team === 'home') item.goalsHome = value; 
+                else item.goalsAway = value; 
+                localStorage.setItem('fs_history', JSON.stringify(history)); 
+            } 
+        }
+        
+        function deleteHistory(id) { 
+            let history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            history = history.filter(h => h.id !== id);
+            localStorage.setItem('fs_history', JSON.stringify(history));
+            renderHistory();
+            renderBetTracking();
+            renderModelLearning();
+            renderPatternDashboard();
+        }
+
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        
+        function renderBetTracking() {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const card = document.getElementById('betTrackingCard');
+            
+            if (history.length === 0) { 
+                card.style.display = 'none'; 
+                return; 
+            }
+            card.style.display = 'block';
+            
+            const completed = history.filter(h => h.result !== 'pending');
+            const straightBets = completed.filter(h => h.betType === 'straight');
+            const overBets = completed.filter(h => h.betType === 'over');
+            const underBets = completed.filter(h => h.betType === 'under');
+            const bttsBets = completed.filter(h => h.betType === 'btts');
+            const highConfBets = completed.filter(h => h.prob >= 70);
+            const medConfBets = completed.filter(h => h.prob >= 50 && h.prob < 70);
+            
+            const calcWinRate = bets => bets.length > 0 ? Math.round((bets.filter(b => b.result === 'won').length / bets.length) * 100) : 0;
+            
+            document.getElementById('straightWinRate').textContent = calcWinRate(straightBets) + '%';
+            document.getElementById('straightWon').textContent = straightBets.filter(b => b.result === 'won').length;
+            document.getElementById('straightTotal').textContent = straightBets.length;
+            
+            document.getElementById('overWinRate').textContent = calcWinRate(overBets) + '%';
+            document.getElementById('overWon').textContent = overBets.filter(b => b.result === 'won').length;
+            document.getElementById('overTotal').textContent = overBets.length;
+            
+            document.getElementById('underWinRate').textContent = calcWinRate(underBets) + '%';
+            document.getElementById('underWon').textContent = underBets.filter(b => b.result === 'won').length;
+            document.getElementById('underTotal').textContent = underBets.length;
+            
+            document.getElementById('bttsWinRate').textContent = calcWinRate(bttsBets) + '%';
+            document.getElementById('bttsWon').textContent = bttsBets.filter(b => b.result === 'won').length;
+            document.getElementById('bttsTotal').textContent = bttsBets.length;
+            
+            document.getElementById('highConfWinRate').textContent = calcWinRate(highConfBets) + '%';
+            document.getElementById('highConfWon').textContent = highConfBets.filter(b => b.result === 'won').length;
+            document.getElementById('highConfTotal').textContent = highConfBets.length;
+            
+            document.getElementById('medConfWinRate').textContent = calcWinRate(medConfBets) + '%';
+            document.getElementById('medConfWon').textContent = medConfBets.filter(b => b.result === 'won').length;
+            document.getElementById('medConfTotal').textContent = medConfBets.length;
+            
+            document.querySelectorAll('.tracking-card').forEach(c => c.classList.remove('best-performer'));
+            
+            const rates = [
+                { type: 'Straight Wins', rate: calcWinRate(straightBets), count: straightBets.length },
+                { type: 'Over 2.5', rate: calcWinRate(overBets), count: overBets.length },
+                { type: 'Under 2.5', rate: calcWinRate(underBets), count: underBets.length },
+                { type: 'BTTS', rate: calcWinRate(bttsBets), count: bttsBets.length }
+            ].filter(r => r.count >= 3);
+            
+            if (rates.length > 0) { 
+                rates.sort((a, b) => b.rate - a.rate); 
+                const best = rates[0]; 
+                document.getElementById('bestBetType').textContent = best.type + ' (' + best.rate + '% win rate)'; 
+                document.getElementById('bestBetAdvice').textContent = 'Based on ' + best.count + ' completed bets. Consider focusing on this bet type.'; 
+                const cardMap = { 'Straight Wins': 'straightCard', 'Over 2.5': 'overCard', 'Under 2.5': 'underCard', 'BTTS': 'bttsCard' }; 
+                if (cardMap[best.type]) document.getElementById(cardMap[best.type]).classList.add('best-performer'); 
+            } else { 
+                document.getElementById('bestBetType').textContent = 'Need more data'; 
+                document.getElementById('bestBetAdvice').textContent = 'Complete at least 3 bets of the same type to see recommendations.'; 
+            }
+            
+            const totalCompleted = completed.length;
+            const totalWon = completed.filter(h => h.result === 'won').length;
+            const overallRate = totalCompleted > 0 ? Math.round((totalWon / totalCompleted) * 100) : 0;
+            
+            let learningMsg = 'AI Learning: Analyzing patterns from your bet history...';
+            if (totalCompleted >= 5) { 
+                if (overallRate >= 60) learningMsg = 'AI Learning: Strong performance detected! Model will prioritize similar patterns.'; 
+                else if (overallRate >= 45) learningMsg = 'AI Learning: Steady progress. Refining prediction weights...'; 
+                else learningMsg = 'AI Learning: Adjusting strategy based on outcomes. Learning from losses...'; 
+            }
+            document.getElementById('learningText').textContent = learningMsg;
+        }
+        
+        function renderWeightDisplay() {
+            document.getElementById('w-straight-ppg').style.width = (modelWeights.straight.ppg * 100) + '%';
+            document.getElementById('wv-straight-ppg').textContent = modelWeights.straight.ppg.toFixed(2);
+            document.getElementById('w-straight-form').style.width = (modelWeights.straight.formTrajectory * 100) + '%';
+            document.getElementById('wv-straight-form').textContent = modelWeights.straight.formTrajectory.toFixed(2);
+            document.getElementById('w-straight-home').style.width = (modelWeights.straight.homeAdvantage * 100) + '%';
+            document.getElementById('wv-straight-home').textContent = modelWeights.straight.homeAdvantage.toFixed(2);
+            document.getElementById('w-straight-goals').style.width = (modelWeights.straight.goalsBalance * 100) + '%';
+            document.getElementById('wv-straight-goals').textContent = modelWeights.straight.goalsBalance.toFixed(2);
+            document.getElementById('w-straight-def').style.width = (modelWeights.straight.defensiveStability * 100) + '%';
+            document.getElementById('wv-straight-def').textContent = modelWeights.straight.defensiveStability.toFixed(2);
+            
+            document.getElementById('w-ou-xg').style.width = (modelWeights.overUnder.xGoals * 100) + '%';
+            document.getElementById('wv-ou-xg').textContent = modelWeights.overUnder.xGoals.toFixed(2);
+            document.getElementById('w-ou-trend').style.width = (modelWeights.overUnder.over25Trend * 100) + '%';
+            document.getElementById('wv-ou-trend').textContent = modelWeights.overUnder.over25Trend.toFixed(2);
+            document.getElementById('w-ou-gaps').style.width = (modelWeights.overUnder.defensiveGaps * 100) + '%';
+            document.getElementById('wv-ou-gaps').textContent = modelWeights.overUnder.defensiveGaps.toFixed(2);
+            document.getElementById('w-ou-pace').style.width = (modelWeights.overUnder.paceIndicator * 100) + '%';
+            document.getElementById('wv-ou-pace').textContent = modelWeights.overUnder.paceIndicator.toFixed(2);
+            
+            document.getElementById('w-btts-attack').style.width = (modelWeights.btts.attackReliability * 100) + '%';
+            document.getElementById('wv-btts-attack').textContent = modelWeights.btts.attackReliability.toFixed(2);
+            document.getElementById('w-btts-def').style.width = (modelWeights.btts.defensiveVulnerability * 100) + '%';
+            document.getElementById('wv-btts-def').textContent = modelWeights.btts.defensiveVulnerability.toFixed(2);
+            document.getElementById('w-btts-hist').style.width = (modelWeights.btts.bttsHistory * 100) + '%';
+            document.getElementById('wv-btts-hist').textContent = modelWeights.btts.bttsHistory.toFixed(2);
+            
+            if (modelWeights.ppgSpread) {
+                document.getElementById('w-ppg-close').style.width = (modelWeights.ppgSpread.closeSpread * 100) + '%';
+                document.getElementById('wv-ppg-close').textContent = modelWeights.ppgSpread.closeSpread.toFixed(2);
+                document.getElementById('w-ppg-moderate').style.width = (modelWeights.ppgSpread.moderateSpread * 100) + '%';
+                document.getElementById('wv-ppg-moderate').textContent = modelWeights.ppgSpread.moderateSpread.toFixed(2);
+                document.getElementById('w-ppg-large-att').style.width = (modelWeights.ppgSpread.largeSpreadAttacking * 100) + '%';
+                document.getElementById('wv-ppg-large-att').textContent = modelWeights.ppgSpread.largeSpreadAttacking.toFixed(2);
+                document.getElementById('w-ppg-large-ctrl').style.width = (modelWeights.ppgSpread.largeSpreadControlling * 100) + '%';
+                document.getElementById('wv-ppg-large-ctrl').textContent = modelWeights.ppgSpread.largeSpreadControlling.toFixed(2);
+                document.getElementById('w-ppg-extreme').style.width = (modelWeights.ppgSpread.extremeSpread * 100) + '%';
+                document.getElementById('wv-ppg-extreme').textContent = modelWeights.ppgSpread.extremeSpread.toFixed(2);
+            }
+        }
+        
+        function renderModelLearning() {
+            const history = JSON.parse(localStorage.getItem('fs_history') || '[]');
+            const card = document.getElementById('modelLearningCard');
+            
+            if (history.length === 0) { 
+                card.style.display = 'none'; 
+                return; 
+            }
+            card.style.display = 'block';
+            
+            const completed = history.filter(h => h.result !== 'pending');
+            document.getElementById('modelEdge').textContent = (calculateModelEdge() > 0 ? '+' : '') + calculateModelEdge() + '%';
+            document.getElementById('totalBetsTracked').textContent = completed.length;
+            
+            const calibration = null; // Simplified
+            document.getElementById('calibrationScore').textContent = calibration ? 'A:' + calibration.toFixed(0) + '%' : '-';
+            
+            const velocity = calculateLearningVelocity();
+            document.getElementById('learningVelocity').textContent = velocity || '-';
+            
+            renderWeightDisplay();
+            renderPPGSpreadPerformance();
+        }
+        
+        function clearAll() {
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('backtestCard').style.display = 'none';
+            document.getElementById('homeHeader').textContent = 'HOME TEAM';
+            document.getElementById('awayHeader').textContent = 'AWAY TEAM';
+            document.getElementById('homeFormValue').textContent = '--';
+            document.getElementById('homeFormValue').className = 'form-value';
+            document.getElementById('awayFormValue').textContent = '--';
+            document.getElementById('awayFormValue').className = 'form-value';
+            currentPrediction = null;
+        }
+        
+        function resetLearning() {
+            if (confirm('Reset all learning data? This will restore default weights and clear calibration data.')) {
+                modelWeights = JSON.parse(JSON.stringify(defaultWeights));
+                saveWeights(modelWeights);
+                localStorage.removeItem('fs_calibrations');
+                localStorage.removeItem('fs_disagreements');
+                localStorage.removeItem('fs_lastRegression');
+                localStorage.removeItem('fs_patternStats');
+                renderWeightDisplay();
+                renderPPGSpreadPerformance();
+                renderPatternDashboard();
+                alert('Learning data reset to defaults.');
+            }
+        }
+        
+        // Initialize on load
+        renderHistory();
+        renderBetTracking();
+        renderModelLearning();
+        
+        console.log('Football Predictor loaded successfully');
+        console.log('Strategy patterns loaded:', {
+            blacklisted: BLACKLISTED_PATTERNS,
+            priority: PRIORITY_PATTERNS
+        });
+    </script>
+</body>
+</html>
