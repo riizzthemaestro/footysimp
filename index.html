@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>FootySimp</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;touch-action:manipulation}
+        body{background:#0d1117;color:#c9d1d9;padding:15px;line-height:1.5;min-height:100vh}
+        .container{max-width:500px;margin:0 auto}
+        h1{text-align:center;color:#58a6ff;margin-bottom:20px;font-size:1.4rem;display:flex;align-items:center;justify-content:center;gap:10px}
+        .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;margin-bottom:12px}
+        .card-title{font-size:0.75rem;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+        .input-group{margin-bottom:12px}
+        .input-group:last-child{margin-bottom:0}
+        label{display:block;font-size:0.8rem;color:#8b949e;margin-bottom:4px}
+        input, select{width:100%;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#c9d1d9;font-size:16px;transition:border-color 0.2s}
+        input:focus, select:focus{outline:none;border-color:#58a6ff}
+        select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+        .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+        .stat-box{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px;text-align:center}
+        .stat-label{font-size:0.65rem;color:#6e7681;text-transform:uppercase;margin-bottom:6px}
+        .stat-input{width:100%;padding:10px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;text-align:center;font-size:1rem;font-weight:600}
+        .stat-input:focus{outline:none;border-color:#58a6ff}
+        .btn{width:100%;padding:14px;background:#238636;border:none;border-radius:8px;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:8px}
+        .btn:hover{background:#2ea043;transform:translateY(-1px)}
+        .btn:active{transform:scale(0.98)}
+        .btn:disabled{background:#30363d;color:#6e7681;cursor:not-allowed;transform:none}
+        .btn-secondary{background:#21262d;border:1px solid #30363d}
+        .btn-secondary:hover{background:#30363d}
+        .result-card{display:none;margin-top:12px;animation:slideIn 0.3s ease}
+        .result-card.show{display:block}
+        @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        .prediction-box{background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:16px;margin-bottom:12px}
+        .prediction-main{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .prediction-type{font-size:1.1rem;color:#a371f7;font-weight:700}
+        .prediction-odds{font-size:1.4rem;color:#3fb950;font-weight:700}
+        .prediction-reason{font-size:0.75rem;color:#8b949e;margin-top:4px}
+        .confidence-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+        .confidence-bar{flex:1;height:8px;background:#21262d;border-radius:4px;overflow:hidden}
+        .confidence-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+        .conf-high{background:linear-gradient(90deg,#238636,#3fb950);animation:pulse 2s infinite}
+        .conf-medium{background:linear-gradient(90deg,#d29922,#f0883e)}
+        .conf-low{background:linear-gradient(90deg,#da3633,#f85149)}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.8}}
+        .confidence-text{font-size:0.8rem;font-weight:600;min-width:40px;text-align:right}
+        .value-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;margin-top:10px}
+        .value-yes{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid #3fb950}
+        .value-no{background:rgba(110,118,129,0.15);color:#8b949e;border:1px solid #6e7681}
+        .market-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+        .market-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:10px;text-align:center}
+        .market-name{font-size:0.7rem;color:#6e7681;text-transform:uppercase}
+        .market-prob{font-size:1rem;font-weight:700;color:#fff;margin-top:4px}
+        .prob-high{color:#3fb950}
+        .prob-medium{color:#d29922}
+        .prob-low{color:#f85149}
+        .hint{font-size:0.7rem;color:#6e7681;margin-top:4px;font-style:italic}
+        .error-hint{font-size:0.7rem;color:#f85149;margin-top:4px;display:none}
+        .error-hint.show{display:block}
+        .input-error{border-color:#f85149!important}
+        .reset-btn{background:transparent;border:1px solid #30363d;color:#8b949e;padding:10px;border-radius:8px;width:100%;margin-top:8px;cursor:pointer;font-size:0.85rem}
+        .reset-btn:hover{border-color:#f85149;color:#f85149}
+        .history-card{display:none}
+        .history-card.show{display:block}
+        .stats-summary{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+        .stat-pill{background:#0d1117;padding:8px 14px;border-radius:20px;font-size:0.75rem;border:1px solid #21262d}
+        .stat-pill span{color:#3fb950;font-weight:700}
+        .stat-pill span.negative{color:#f85149}
+        .history-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden}
+        .history-item.won{border-left:3px solid #3fb950}
+        .history-item.lost{border-left:3px solid #f85149}
+        .history-item.pending{border-left:3px solid #8b949e}
+        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .history-teams{font-size:0.7rem;color:#58a6ff;font-weight:600}
+        .history-date{color:#6e7681;font-size:0.65rem}
+        .history-pred{color:#a371f7;font-weight:600;font-size:0.85rem}
+        .history-actions{display:flex;gap:6px;margin-top:10px}
+        .status-btn{padding:5px 12px;border:none;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:600}
+        .status-won-btn{background:rgba(63,185,80,0.2);color:#3fb950;border:1px solid #3fb950}
+        .status-lost-btn{background:rgba(248,81,73,0.2);color:#f85149;border:1px solid #f85149}
+        .delete-btn{background:transparent;color:#6e7681;border:1px solid #30363d;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.7rem}
+        .delete-btn:hover{color:#f85149;border-color:#f85149}
+        .history-scroll{max-height:350px;overflow-y:auto}
+        .empty-state{text-align:center;padding:30px;color:#6e7681;font-size:0.8rem}
+        .filter-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+        .filter-tab{padding:6px 12px;background:#0d1117;border:1px solid #21262d;border-radius:20px;font-size:0.7rem;cursor:pointer;color:#8b949e;transition:all 0.2s}
+        .filter-tab.active{background:#58a6ff;color:#fff;border-color:#58a6ff}
+        .expand-btn{background:transparent;border:1px solid #30363d;color:#8b949e;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;gap:6px;transition:all 0.2s}
+        .expand-btn:hover{border-color:#58a6ff;color:#58a6ff}
+        .expand-btn svg{width:14px;height:14px}
+        .history-fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0d1117;z-index:1000;padding:20px;overflow-y:auto}
+        .history-fullscreen .history-scroll{max-height:none;height:calc(100vh - 200px)}
+        .history-fullscreen .card-title{font-size:1rem}
+        .close-fullscreen{position:fixed;top:20px;right:20px;background:#21262d;border:1px solid #30363d;color:#8b949e;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;z-index:1001;display:flex;align-items:center;gap:8px}
+        .close-fullscreen:hover{border-color:#f85149;color:#f85149}
+        .icon{width:24px;height:24px;fill:currentColor}
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#238636;color:#fff;padding:12px 24px;border-radius:8px;font-size:0.9rem;opacity:0;transition:all 0.3s;z-index:2000}
+        .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+        .streak-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid #ffc107;border-radius:20px;font-size:0.7rem;font-weight:600;margin-left:8px}
+        .search-box{width:100%;padding:10px;background:#0d1117;border:1px solid #21262d;border-radius:8px;color:#c9d1d9;font-size:0.85rem;margin-bottom:12px}
+        .search-box:focus{outline:none;border-color:#58a6ff}
+        .export-btn{background:transparent;border:1px solid #30363d;color:#8b949e;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:0.7rem;margin-left:auto}
+        .export-btn:hover{border-color:#58a6ff;color:#58a6ff}
+        .btts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+        @media(max-width:400px){.stats-grid{grid-template-columns:1fr}.market-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m4.93 4.93 4.24 4.24"/>
+                <path d="m14.83 9.17 4.24-4.24"/>
+                <path d="m14.83 14.83 4.24 4.24"/>
+                <path d="m9.17 14.83-4.24 4.24"/>
+                <circle cx="12" cy="12" r="4"/>
+            </svg>
+            FootySimp
+        </h1>
+        
+        <div class="card">
+            <div class="card-title">Quick Preset</div>
+            <select id="leaguePreset" onchange="applyPreset()">
+                <option value="">Custom Stats</option>
+                <option value="epl">Premier League (2.7 goals, 58% Over)</option>
+                <option value="championship">Championship (2.4 goals, 48% Over)</option>
+                <option value="seriea">Serie A (2.5 goals, 52% Over)</option>
+                <option value="laliga">La Liga (2.6 goals, 54% Over)</option>
+                <option value="bundesliga">Bundesliga (2.9 goals, 62% Over)</option>
+                <option value="ligue1">Ligue 1 (2.3 goals, 46% Over)</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Teams</div>
+            <div class="input-group">
+                <label>Home Team</label>
+                <input type="text" id="homeTeam" placeholder="e.g. Manchester City" oninput="saveFormData()"/>
+            </div>
+            <div class="input-group">
+                <label>Away Team</label>
+                <input type="text" id="awayTeam" placeholder="e.g. Liverpool" oninput="saveFormData()"/>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Key Stats <span style="font-weight:normal;color:#6e7681">(2 inputs)</span></div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Avg Goals</div>
+                    <input type="number" id="avgGoals" class="stat-input" placeholder="2.5" step="0.1" min="0" max="10" oninput="validateAndSave(this)"/>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Over 2.5%</div>
+                    <input type="number" id="over25" class="stat-input" placeholder="50" min="0" max="100" oninput="validateAndSave(this)"/>
+                </div>
+            </div>
+            <div class="hint">Enter average of both teams' stats</div>
+            <div class="error-hint" id="statsError">Please enter valid stats (0-100 for %, 0-10 for goals)</div>
+        </div>
+
+        <button class="btn" id="predictBtn" onclick="predict()">PREDICT MATCH</button>
+        <button class="reset-btn" onclick="resetForm()">Reset</button>
+
+        <div id="resultCard" class="card result-card">
+            <div class="card-title">Prediction</div>
+            <div class="prediction-box">
+                <div class="prediction-main">
+                    <div>
+                        <div class="prediction-type" id="predType">-</div>
+                        <div class="prediction-reason" id="predReason">-</div>
+                    </div>
+                    <div class="prediction-odds" id="predOdds">-</div>
+                </div>
+                <div class="confidence-row">
+                    <span style="font-size:0.75rem;color:#8b949e">Confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confBar"></div>
+                    </div>
+                    <span class="confidence-text" id="confText">0%</span>
+                </div>
+                <div id="valueBadge"></div>
+            </div>
+            
+            <div class="card-title" style="margin-top:12px">All Markets</div>
+            <div class="market-grid">
+                <div class="market-item">
+                    <div class="market-name">Over 2.5</div>
+                    <div class="market-prob" id="probOver">-</div>
+                </div>
+                <div class="market-item">
+                    <div class="market-name">Under 2.5</div>
+                    <div class="market-prob" id="probUnder">-</div>
+                </div>
+            </div>
+            <div class="btts-grid">
+                <div class="market-item">
+                    <div class="market-name">BTTS Yes</div>
+                    <div class="market-prob" id="probBttsYes">-</div>
+                </div>
+                <div class="market-item">
+                    <div class="market-name">BTTS No</div>
+                    <div class="market-prob" id="probBttsNo">-</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="saveToHistory()" style="margin-top:12px">Save to History</button>
+        </div>
+
+        <div id="historyCard" class="card history-card">
+            <div class="card-title">
+                <span>Prediction History</span>
+                <span style="font-size:0.7rem;color:#6e7681" id="historyCount">0 bets</span>
+            </div>
+            <div class="stats-summary">
+                <div class="stat-pill">Won: <span id="wonCount">0</span></div>
+                <div class="stat-pill">Lost: <span id="lostCount" class="negative">0</span></div>
+                <div class="stat-pill">Win Rate: <span id="winRate">0%</span></div>
+                <div class="stat-pill">ROI: <span id="roiValue">0%</span></div>
+                <div class="stat-pill" id="streakContainer" style="display:none">Streak: <span id="streakValue" style="color:#ffc107">0</span></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+                <input type="text" class="search-box" id="searchHistory" placeholder="Search teams..." oninput="renderHistory()"/>
+                <button class="export-btn" onclick="exportHistory()">Export CSV</button>
+            </div>
+            <div class="filter-tabs">
+                <div class="filter-tab active" onclick="filterHistory('all',this)">All</div>
+                <div class="filter-tab" onclick="filterHistory('pending',this)">Pending</div>
+                <div class="filter-tab" onclick="filterHistory('won',this)">Won</div>
+                <div class="filter-tab" onclick="filterHistory('lost',this)">Lost</div>
+            </div>
+            <button class="expand-btn" onclick="toggleFullscreen()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+                    <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+                </svg>
+                Expand Full Screen
+            </button>
+            <div id="historyList" class="history-scroll">
+                <div class="empty-state">No predictions yet. Save your first prediction!</div>
+            </div>
+            <button class="reset-btn" onclick="clearHistory()" style="margin-top:12px">Clear All History</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentPrediction=null;
+        let historyFilter='all';
+        let isFullscreen=false;
+
+        const presets={
+            epl:{avgGoals:2.7,over25:58},
+            championship:{avgGoals:2.4,over25:48},
+            seriea:{avgGoals:2.5,over25:52},
+            laliga:{avgGoals:2.6,over25:54},
+            bundesliga:{avgGoals:2.9,over25:62},
+            ligue1:{avgGoals:2.3,over25:46}
+        };
+
+        document.addEventListener('DOMContentLoaded',function(){
+            loadFormData();
+            renderHistory();
+        });
+
+        function applyPreset(){
+            const preset=document.getElementById('leaguePreset').value;
+            if(presets[preset]){
+                document.getElementById('avgGoals').value=presets[preset].avgGoals;
+                document.getElementById('over25').value=presets[preset].over25;
+                saveFormData();
+                showToast('Preset applied: '+document.getElementById('leaguePreset').options[document.getElementById('leaguePreset').selectedIndex].text.split('(')[0].trim());
+            }
+        }
+
+        function validateAndSave(input){
+            const val=parseFloat(input.value);
+            const id=input.id;
+            let isValid=true;
+            
+            if(id==='over25'){
+                if(val<0||val>100||isNaN(val)){
+                    isValid=false;
+                }
+            }else if(id==='avgGoals'){
+                if(val<0||val>10||isNaN(val)){
+                    isValid=false;
+                }
+            }
+            
+            if(!isValid&&input.value!==''){
+                input.classList.add('input-error');
+                document.getElementById('statsError').classList.add('show');
+            }else{
+                input.classList.remove('input-error');
+                document.getElementById('statsError').classList.remove('show');
+            }
+            
+            saveFormData();
+        }
+
+        function saveFormData(){
+            const data={
+                homeTeam:document.getElementById('homeTeam').value,
+                awayTeam:document.getElementById('awayTeam').value,
+                avgGoals:document.getElementById('avgGoals').value,
+                over25:document.getElementById('over25').value,
+                preset:document.getElementById('leaguePreset').value
+            };
+            localStorage.setItem('afs_formData',JSON.stringify(data));
+        }
+
+        function loadFormData(){
+            const data=JSON.parse(localStorage.getItem('afs_formData')||'{}');
+            if(data.homeTeam)document.getElementById('homeTeam').value=data.homeTeam;
+            if(data.awayTeam)document.getElementById('awayTeam').value=data.awayTeam;
+            if(data.avgGoals)document.getElementById('avgGoals').value=data.avgGoals;
+            if(data.over25)document.getElementById('over25').value=data.over25;
+            if(data.preset)document.getElementById('leaguePreset').value=data.preset;
+        }
+
+        function predict(){
+            const homeTeam=document.getElementById('homeTeam').value.trim()||'Home Team';
+            const awayTeam=document.getElementById('awayTeam').value.trim()||'Away Team';
+            const over25Input=document.getElementById('over25');
+            const avgGoalsInput=document.getElementById('avgGoals');
+            
+            const over25=parseFloat(over25Input.value);
+            const avgGoals=parseFloat(avgGoalsInput.value);
+            
+            // Validation
+            if(isNaN(over25)||isNaN(avgGoals)||over25Input.value===''||avgGoalsInput.value===''){
+                showToast('Please fill in all stats fields');
+                over25Input.classList.add('input-error');
+                avgGoalsInput.classList.add('input-error');
+                return;
+            }
+            
+            if(over25<0||over25>100||avgGoals<0||avgGoals>10){
+                showToast('Invalid values entered');
+                return;
+            }
+            
+            over25Input.classList.remove('input-error');
+            avgGoalsInput.classList.remove('input-error');
+            
+            // Show loading
+            const btn=document.getElementById('predictBtn');
+            const originalText=btn.textContent;
+            btn.disabled=true;
+            btn.textContent='Analyzing...';
+            
+            setTimeout(()=>{
+                calculatePrediction(homeTeam,awayTeam,over25,avgGoals);
+                btn.disabled=false;
+                btn.textContent=originalText;
+            },400);
+        }
+
+        function calculatePrediction(homeTeam,awayTeam,over25,avgGoals){
+            let overProb=over25;
+            let underProb=100-overProb;
+            
+            if(avgGoals>=3.0){
+                overProb=Math.min(overProb+12,90);
+                underProb=100-overProb;
+            }else if(avgGoals<=2.0){
+                underProb=Math.min(underProb+15,90);
+                overProb=100-underProb;
+            }
+            
+            // BTTS calculation based on avg goals and over 2.5%
+            let bttsYes=Math.round((avgGoals/3)*100);
+            if(overProb>60)bttsYes+=10;
+            if(avgGoals>2.8)bttsYes+=5;
+            bttsYes=Math.min(Math.max(bttsYes,30),75);
+            let bttsNo=100-bttsYes;
+            
+            let bestBet,confidence,reason;
+            if(overProb>underProb){
+                bestBet='Over 2.5 Goals';
+                confidence=Math.round(overProb);
+                reason=avgGoals>=3.0?'High avg goals suggests attacking game':'Over 2.5 stats favor this outcome';
+            }else{
+                bestBet='Under 2.5 Goals';
+                confidence=Math.round(underProb);
+                reason=avgGoals<=2.0?'Low avg goals suggests defensive game':'Under 2.5 stats favor this outcome';
+            }
+            
+            const odds=bestBet.includes('Over')?(confidence>70?1.75:confidence>55?1.90:2.10):(confidence>70?1.80:confidence>55?1.95:2.05);
+            
+            currentPrediction={
+                homeTeam,
+                awayTeam,
+                prediction:bestBet,
+                confidence,
+                odds,
+                reason,
+                bttsYes,
+                bttsNo,
+                date:new Date().toLocaleDateString()
+            };
+            
+            document.getElementById('predType').textContent=bestBet;
+            document.getElementById('predOdds').textContent='@'+odds.toFixed(2);
+            document.getElementById('predReason').textContent=reason;
+            document.getElementById('confText').textContent=confidence+'%';
+            document.getElementById('confBar').style.width=confidence+'%';
+            document.getElementById('confBar').className='confidence-fill '+(confidence>=70?'conf-high':confidence>=50?'conf-medium':'conf-low');
+            
+            document.getElementById('probOver').textContent=overProb+'%';
+            document.getElementById('probOver').className='market-prob '+(overProb>=70?'prob-high':overProb>=50?'prob-medium':'prob-low');
+            document.getElementById('probUnder').textContent=underProb+'%';
+            document.getElementById('probUnder').className='market-prob '+(underProb>=70?'prob-high':underProb>=50?'prob-medium':'prob-low');
+            
+            document.getElementById('probBttsYes').textContent=bttsYes+'%';
+            document.getElementById('probBttsYes').className='market-prob '+(bttsYes>=60?'prob-high':bttsYes>=45?'prob-medium':'prob-low');
+            document.getElementById('probBttsNo').textContent=bttsNo+'%';
+            document.getElementById('probBttsNo').className='market-prob '+(bttsNo>=60?'prob-high':bttsNo>=45?'prob-medium':'prob-low');
+            
+            const valueBadge=document.getElementById('valueBadge');
+            if(confidence>=65&&odds<=1.90){
+                valueBadge.innerHTML='<span class="value-badge value-yes">Value Bet</span>';
+            }else{
+                valueBadge.innerHTML='<span class="value-badge value-no">Low Value</span>';
+            }
+            
+            document.getElementById('resultCard').classList.add('show');
+            document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+        }
+
+        function saveToHistory(){
+            if(!currentPrediction)return;
+            const history=JSON.parse(localStorage.getItem('afs_history')||'[]');
+            const newItem={...currentPrediction,id:Date.now(),status:'pending'};
+            history.unshift(newItem);
+            localStorage.setItem('afs_history',JSON.stringify(history));
+            renderHistory();
+            showToast('Prediction saved!');
+            document.getElementById('resultCard').classList.remove('show');
+            currentPrediction=null;
+        }
+
+        function renderHistory(){
+            const history=JSON.parse(localStorage.getItem('afs_history')||'[]');
+            const searchTerm=document.getElementById('searchHistory').value.toLowerCase();
+            const list=document.getElementById('historyList');
+            
+            const won=history.filter(h=>h.status==='won').length;
+            const lost=history.filter(h=>h.status==='lost').length;
+            const total=won+lost;
+            const winRate=total>0?Math.round((won/total)*100):0;
+            
+            // Calculate actual ROI based on stored odds
+            let totalStake=total;
+            let totalReturn=history.filter(h=>h.status==='won').reduce((sum,h)=>sum+(h.odds||1.9),0);
+            const roi=total>0?((totalReturn-totalStake)/totalStake*100).toFixed(1):0;
+            
+            document.getElementById('wonCount').textContent=won;
+            document.getElementById('lostCount').textContent=lost;
+            document.getElementById('winRate').textContent=winRate+'%';
+            document.getElementById('roiValue').textContent=roi+'%';
+            document.getElementById('roiValue').className=roi>=0?'':'negative';
+            document.getElementById('historyCount').textContent=`${history.length} bets`;
+            
+            // Calculate streak
+            let streak=0;
+            let streakType='';
+            for(let item of history){
+                if(item.status==='pending')continue;
+                if(streakType===''){
+                    streakType=item.status;
+                    streak=1;
+                }else if(item.status===streakType){
+                    streak++;
+                }else{
+                    break;
+                }
+            }
+            if(streak>2){
+                document.getElementById('streakContainer').style.display='block';
+                document.getElementById('streakValue').textContent=streakType==='won'?streak+' W':streak+' L';
+                document.getElementById('streakValue').style.color=streakType==='won'?'#3fb950':'#f85149';
+            }else{
+                document.getElementById('streakContainer').style.display='none';
+            }
+            
+            let filtered=history;
+            if(historyFilter!=='all'){
+                filtered=history.filter(h=>h.status===historyFilter);
+            }
+            
+            if(searchTerm){
+                filtered=filtered.filter(h=>
+                    (h.homeTeam+' vs '+h.awayTeam).toLowerCase().includes(searchTerm)||
+                    h.prediction.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if(filtered.length===0){
+                list.innerHTML='<div class="empty-state">No predictions in this category</div>';
+                return;
+            }
+            
+            list.innerHTML=filtered.map(item=>`
+                <div class="history-item ${item.status}">
+                    <div class="history-header">
+                        <span class="history-teams">${item.homeTeam} vs ${item.awayTeam}</span>
+                        <span class="history-date">${item.date}</span>
+                    </div>
+                    <div class="history-pred">${item.prediction} @${item.odds} (${item.confidence}%)</div>
+                    <div style="font-size:0.7rem;color:#6e7681;margin-top:4px">${item.reason}</div>
+                    ${item.status==='pending'?`
+                        <div class="history-actions">
+                            <button class="status-btn status-won-btn" onclick="updateStatus(${item.id},'won')">Won</button>
+                            <button class="status-btn status-lost-btn" onclick="updateStatus(${item.id},'lost')">Lost</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    `:`
+                        <div class="history-actions">
+                            <button class="status-btn" style="background:#21262d;color:#8b949e;border:1px solid #30363d" onclick="updateStatus(${item.id},'pending')">Undo</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+            
+            if(history.length>0){
+                document.getElementById('historyCard').classList.add('show');
+            }
+        }
+
+        function updateStatus(id,status){
+            let history=JSON.parse(localStorage.getItem('afs_history')||'[]');
+            const item=history.find(h=>h.id===id);
+            if(item){
+                item.status=status;
+                localStorage.setItem('afs_history',JSON.stringify(history));
+                renderHistory();
+            }
+        }
+
+        function deletePrediction(id){
+            let history=JSON.parse(localStorage.getItem('afs_history')||'[]');
+            history=history.filter(h=>h.id!==id);
+            localStorage.setItem('afs_history',JSON.stringify(history));
+            renderHistory();
+        }
+
+        function filterHistory(filter,element){
+            historyFilter=filter;
+            document.querySelectorAll('.filter-tab').forEach(tab=>tab.classList.remove('active'));
+            element.classList.add('active');
+            renderHistory();
+        }
+
+        function toggleFullscreen(){
+            const historyCard=document.getElementById('historyCard');
+            isFullscreen=!isFullscreen;
+            if(isFullscreen){
+                historyCard.classList.add('history-fullscreen');
+                const closeBtn=document.createElement('button');
+                closeBtn.className='close-fullscreen';
+                closeBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>Exit Full Screen';
+                closeBtn.onclick=toggleFullscreen;
+                document.body.appendChild(closeBtn);
+            }else{
+                historyCard.classList.remove('history-fullscreen');
+                const closeBtn=document.querySelector('.close-fullscreen');
+                if(closeBtn)closeBtn.remove();
+            }
+        }
+
+        function clearHistory(){
+            if(confirm('Clear all prediction history? This cannot be undone.')){
+                localStorage.removeItem('afs_history');
+                renderHistory();
+                document.getElementById('historyCard').classList.remove('show');
+                showToast('History cleared');
+            }
+        }
+
+        function resetForm(){
+            document.getElementById('homeTeam').value='';
+            document.getElementById('awayTeam').value='';
+            document.getElementById('over25').value='';
+            document.getElementById('avgGoals').value='';
+            document.getElementById('leaguePreset').value='';
+            document.getElementById('resultCard').classList.remove('show');
+            document.getElementById('statsError').classList.remove('show');
+            document.querySelectorAll('.input-error').forEach(el=>el.classList.remove('input-error'));
+            localStorage.removeItem('afs_formData');
+            currentPrediction=null;
+            showToast('Form reset');
+        }
+
+        function showToast(message){
+            const toast=document.getElementById('toast');
+            toast.textContent=message;
+            toast.classList.add('show');
+            setTimeout(()=>toast.classList.remove('show'),2500);
+        }
+
+        function exportHistory(){
+            const history=JSON.parse(localStorage.getItem('afs_history')||'[]');
+            if(history.length===0){
+                showToast('No history to export');
+                return;
+            }
+            
+            let csv='Date,Home Team,Away Team,Prediction,Odds,Confidence,Reason,Status\n';
+            history.forEach(h=>{
+                csv+=`${h.date},${h.homeTeam},${h.awayTeam},${h.prediction},${h.odds},${h.confidence}%,"${h.reason}",${h.status}\n`;
+            });
+            
+            const blob=new Blob([csv],{type:'text/csv'});
+            const url=window.URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;
+            a.download='footysimp_history_'+new Date().toISOString().split('T')[0]+'.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showToast('History exported!');
+        }
+    </script>
+</body>
+</html>
