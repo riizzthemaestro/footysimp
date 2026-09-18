@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>FootySimp - Football Prediction Engine</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;touch-action:manipulation}
+        body{background:#0a0e1a;color:#e4e6f0;padding:15px;line-height:1.5;min-height:100vh}
+        .container{max-width:600px;margin:0 auto}
+        h1{text-align:center;color:#00d4ff;margin-bottom:8px;font-size:1.5rem;display:flex;align-items:center;justify-content:center;gap:10px}
+        .subtitle{text-align:center;color:#6b7280;font-size:0.8rem;margin-bottom:20px}
+        .card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:16px;margin-bottom:12px}
+        .card-title{font-size:0.75rem;color:#9ca3af;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+        .input-group{margin-bottom:12px}
+        .input-group:last-child{margin-bottom:0}
+        label{display:block;font-size:0.8rem;color:#9ca3af;margin-bottom:4px}
+        input, select{width:100%;padding:12px;background:#0a0e1a;border:1px solid #374151;border-radius:10px;color:#e4e6f0;font-size:16px;transition:all 0.2s}
+        input:focus, select:focus{outline:none;border-color:#00d4ff;box-shadow:0 0 0 3px rgba(0,212,255,0.1)}
+        select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+        
+        .team-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .team-card{background:#0a0e1a;border:1px solid #374151;border-radius:12px;padding:12px}
+        .team-card.home{border-color:#10b981}
+        .team-card.away{border-color:#f59e0b}
+        .team-label{font-size:0.7rem;color:#6b7280;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+        .team-label::before{content:'';width:8px;height:8px;border-radius:50%}
+        .team-card.home .team-label::before{background:#10b981}
+        .team-card.away .team-label::before{background:#f59e0b}
+        
+        .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+        .stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+        .stat-box{background:#1f2937;border-radius:8px;padding:10px;text-align:center}
+        .stat-label{font-size:0.6rem;color:#6b7280;text-transform:uppercase;margin-bottom:4px}
+        .stat-input{width:100%;padding:8px;background:#111827;border:1px solid #374151;border-radius:6px;color:#e4e6f0;text-align:center;font-size:0.95rem;font-weight:600}
+        .stat-input:focus{outline:none;border-color:#00d4ff}
+        
+        .advanced-toggle{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:#1f2937;border-radius:8px;cursor:pointer;margin-bottom:12px;transition:all 0.2s}
+        .advanced-toggle:hover{background:#374151}
+        .advanced-toggle svg{width:16px;height:16px;transition:transform 0.3s}
+        .advanced-toggle.expanded svg{transform:rotate(180deg)}
+        .advanced-stats{display:none}
+        .advanced-stats.show{display:block}
+        
+        .btn{width:100%;padding:16px;background:linear-gradient(135deg,#00d4ff,#0099cc);border:none;border-radius:12px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(0,212,255,0.3)}
+        .btn:active{transform:scale(0.98)}
+        .btn:disabled{background:#374151;color:#6b7280;cursor:not-allowed;transform:none;box-shadow:none}
+        
+        .result-card{display:none;margin-top:16px;animation:slideIn 0.4s ease}
+        .result-card.show{display:block}
+        @keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+        
+        .prediction-main{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .prediction-type{font-size:1.3rem;font-weight:700}
+        .prediction-type.over{color:#10b981}
+        .prediction-type.under{color:#f59e0b}
+        .prediction-type.nobet{color:#6b7280}
+        .prediction-odds{font-size:1.6rem;color:#00d4ff;font-weight:800}
+        .prediction-reason{font-size:0.75rem;color:#9ca3af;margin-top:4px;line-height:1.4}
+        
+        .confidence-section{margin-top:12px}
+        .confidence-row{display:flex;align-items:center;gap:12px}
+        .confidence-bar{flex:1;height:10px;background:#374151;border-radius:5px;overflow:hidden}
+        .confidence-fill{height:100%;border-radius:5px;transition:width 0.8s ease}
+        .conf-high{background:linear-gradient(90deg,#10b981,#34d399)}
+        .conf-medium{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+        .conf-low{background:linear-gradient(90deg,#ef4444,#f87171)}
+        .confidence-text{font-size:0.9rem;font-weight:700;min-width:50px;text-align:right}
+        
+        .value-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;margin-top:12px}
+        .value-yes{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid #10b981}
+        .value-no{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid #ef4444}
+        .value-maybe{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b}
+        
+        .probabilities-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+        .prob-item{background:#0a0e1a;border:1px solid #374151;border-radius:10px;padding:12px;text-align:center}
+        .prob-name{font-size:0.65rem;color:#6b7280;text-transform:uppercase;margin-bottom:4px}
+        .prob-value{font-size:1.1rem;font-weight:700}
+        .prob-high{color:#10b981}
+        .prob-medium{color:#f59e0b}
+        .prob-low{color:#ef4444}
+        
+        .score-probabilities{margin-top:12px}
+        .score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+        .score-item{background:#0a0e1a;border:1px solid #374151;border-radius:8px;padding:8px 4px;text-align:center;font-size:0.7rem}
+        .score-item.highlighted{border-color:#00d4ff;background:rgba(0,212,255,0.1)}
+        .score-line{color:#9ca3af;margin-bottom:2px}
+        .score-prob{color:#e4e6f0;font-weight:600}
+        
+        .analysis-section{margin-top:12px;padding:12px;background:#0a0e1a;border-radius:10px;border:1px solid #374151}
+        .analysis-title{font-size:0.7rem;color:#6b7280;text-transform:uppercase;margin-bottom:8px}
+        .analysis-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1f2937;font-size:0.8rem}
+        .analysis-item:last-child{border-bottom:none}
+        .analysis-label{color:#9ca3af}
+        .analysis-value{color:#e4e6f0;font-weight:600}
+        .analysis-value.positive{color:#10b981}
+        .analysis-value.negative{color:#ef4444}
+        .analysis-value.neutral{color:#f59e0b}
+        
+        .hint{font-size:0.7rem;color:#6b7280;margin-top:6px;font-style:italic}
+        .error-hint{font-size:0.7rem;color:#ef4444;margin-top:4px;display:none}
+        .error-hint.show{display:block}
+        .input-error{border-color:#ef4444!important}
+        
+        .reset-btn{background:transparent;border:1px solid #374151;color:#9ca3af;padding:12px;border-radius:10px;width:100%;margin-top:8px;cursor:pointer;font-size:0.9rem;transition:all 0.2s}
+        .reset-btn:hover{border-color:#ef4444;color:#ef4444}
+        
+        .history-card{display:none}
+        .history-card.show{display:block}
+        .stats-summary{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+        .stat-pill{background:#0a0e1a;padding:8px 14px;border-radius:20px;font-size:0.75rem;border:1px solid #374151}
+        .stat-pill span{color:#10b981;font-weight:700}
+        .stat-pill span.negative{color:#ef4444}
+        
+        .history-item{background:#0a0e1a;border:1px solid #374151;border-radius:10px;padding:12px;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.2s}
+        .history-item:hover{border-color:#00d4ff;background:rgba(0,212,255,0.05)}
+        .history-item.won{border-left:3px solid #10b981}
+        .history-item.lost{border-left:3px solid #ef4444}
+        .history-item.pending{border-left:3px solid #6b7280}
+        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .history-teams{font-size:0.75rem;color:#00d4ff;font-weight:600}
+        .history-date{color:#6b7280;font-size:0.65rem}
+        .history-pred{color:#e4e6f0;font-weight:600;font-size:0.85rem}
+        .history-actions{display:flex;gap:6px;margin-top:10px}
+        .status-btn{padding:6px 14px;border:none;border-radius:6px;font-size:0.7rem;cursor:pointer;font-weight:600;transition:all 0.2s}
+        .status-won-btn{background:rgba(16,185,129,0.2);color:#10b981;border:1px solid #10b981}
+        .status-won-btn:hover{background:rgba(16,185,129,0.3)}
+        .status-lost-btn{background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid #ef4444}
+        .status-lost-btn:hover{background:rgba(239,68,68,0.3)}
+        .delete-btn{background:transparent;color:#6b7280;border:1px solid #374151;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.7rem;transition:all 0.2s}
+        .delete-btn:hover{color:#ef4444;border-color:#ef4444}
+        
+        .history-scroll{max-height:350px;overflow-y:auto}
+        .empty-state{text-align:center;padding:30px;color:#6b7280;font-size:0.8rem}
+        
+        .filter-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+        .filter-tab{padding:6px 14px;background:#0a0e1a;border:1px solid #374151;border-radius:20px;font-size:0.7rem;cursor:pointer;color:#9ca3af;transition:all 0.2s}
+        .filter-tab.active{background:#00d4ff;color:#0a0e1a;border-color:#00d4ff;font-weight:600}
+        
+        .search-box{width:100%;padding:10px 14px;background:#0a0e1a;border:1px solid #374151;border-radius:10px;color:#e4e6f0;font-size:0.85rem;margin-bottom:12px}
+        .search-box:focus{outline:none;border-color:#00d4ff}
+        
+        .export-btn{background:transparent;border:1px solid #374151;color:#9ca3af;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s}
+        .export-btn:hover{border-color:#00d4ff;color:#00d4ff}
+        
+        .expand-btn{background:transparent;border:1px solid #374151;color:#9ca3af;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:0.7rem;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+        .expand-btn:hover{border-color:#00d4ff;color:#00d4ff}
+        .expand-btn svg{width:14px;height:14px}
+        
+        .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#10b981;color:#fff;padding:14px 28px;border-radius:12px;font-size:0.9rem;font-weight:600;opacity:0;transition:all 0.3s;z-index:2000;box-shadow:0 4px 20px rgba(16,185,129,0.3)}
+        .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+        .toast.error{background:#ef4444;box-shadow:0 4px 20px rgba(239,68,68,0.3)}
+        .toast.warning{background:#f59e0b;box-shadow:0 4px 20px rgba(245,158,11,0.3)}
+        
+        .icon{width:28px;height:28px;fill:currentColor}
+        
+        .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,14,26,0.9);display:none;align-items:center;justify-content:center;z-index:3000;flex-direction:column;gap:20px}
+        .loading-overlay.show{display:flex}
+        .spinner{width:50px;height:50px;border:3px solid #374151;border-top-color:#00d4ff;border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loading-text{color:#9ca3af;font-size:0.9rem}
+        
+        .formula-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(0,212,255,0.1);color:#00d4ff;border:1px solid rgba(0,212,255,0.3);border-radius:20px;font-size:0.65rem;margin-left:auto}
+        
+        /* Form Selector Styles - Compact for Match Setup */
+        .form-selector-compact{background:#0a0e1a;border:1px solid #374151;border-radius:10px;padding:10px;margin-top:8px}
+        .form-selector-label{font-size:0.6rem;color:#6b7280;text-transform:uppercase;margin-bottom:8px;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px}
+        .form-dots{display:flex;justify-content:center;gap:6px;margin-bottom:8px}
+        .form-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;transition:all 0.2s;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700}
+        .form-dot:hover{transform:scale(1.1)}
+        .form-dot.win{background:#10b981;color:#fff}
+        .form-dot.draw{background:#f59e0b;color:#000}
+        .form-dot.loss{background:#ef4444;color:#fff}
+        .form-dot.empty{background:#1f2937;border-color:#374151}
+        .form-result{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px;background:#111827;border-radius:6px}
+        .form-points{font-size:1rem;font-weight:700;color:#00d4ff}
+        .form-weighted{font-size:0.7rem;color:#6b7280}
+        .form-max{font-size:0.65rem;color:#6b7280}
+        .form-legend{display:flex;justify-content:center;gap:10px;margin-top:6px;font-size:0.55rem;color:#6b7280}
+        .form-legend span{display:flex;align-items:center;gap:3px}
+        .form-legend .dot{width:6px;height:6px;border-radius:50%}
+        .form-legend .win{background:#10b981}
+        .form-legend .draw{background:#f59e0b}
+        .form-legend .loss{background:#ef4444}
+        
+        .score-form{padding:12px}.form-selector-label{flex-direction:column;gap:3px;align-items:flex-start}.form-selector-label small{font-size:.58rem;color:#6b7280;text-transform:none;letter-spacing:0}.score-inputs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}.score-row{display:flex;flex-direction:column;align-items:center;gap:4px}.score-row>span{font-size:.55rem;color:#6b7280}.form-score{width:100%;min-width:0;text-align:center;background:#111827;border:1px solid #374151;border-radius:8px;color:#fff;padding:9px 3px;font-weight:700;font-size:.8rem}.form-score:focus{outline:none;border-color:#00d4ff;box-shadow:0 0 0 2px rgba(0,212,255,.12)}.form-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}.form-summary-grid>div{background:#111827;border-radius:8px;padding:7px 3px;text-align:center}.form-summary-grid b{display:block;font-size:.78rem;color:#f3f4f6}.form-summary-grid small{font-size:.5rem;color:#6b7280;text-transform:uppercase}.form-result{font-size:.58rem;justify-content:space-between;gap:8px;flex-wrap:wrap}.form-result>span:first-child{color:#9ca3af}.auto-badge{display:inline-block;margin-left:4px;padding:2px 5px;border-radius:999px;font-size:.48rem;line-height:1.2;background:rgba(0,212,255,.12);color:#00d4ff;vertical-align:middle}.auto-stat{opacity:.9;cursor:default}.auto-stat:read-only{border-color:#243447}.xg-estimate-note{font-size:.54rem;color:#6b7280;margin-top:4px;text-align:center}@media(max-width:520px){.score-inputs{gap:4px}.form-score{font-size:.72rem;padding:8px 1px}.form-summary-grid b{font-size:.7rem}}
+        /* Sparkline for form visualization */
+        .sparkline{display:flex;align-items:center;gap:2px;height:20px;margin-left:auto}
+        .spark-bar{width:4px;border-radius:2px;transition:all 0.3s}
+        .spark-bar.win{background:#10b981;height:100%}
+        .spark-bar.draw{background:#f59e0b;height:60%}
+        .spark-bar.loss{background:#ef4444;height:30%}
+        
+        /* Fullscreen History Modal */
+        .history-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0e1a;z-index:4000;display:none;flex-direction:column}
+        .history-modal.show{display:flex}
+        .history-modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#111827;border-bottom:1px solid #1f2937}
+        .history-modal-title{font-size:1.1rem;font-weight:600;color:#e4e6f0}
+        .history-modal-close{background:transparent;border:1px solid #374151;color:#9ca3af;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.8rem;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+        .history-modal-close:hover{border-color:#ef4444;color:#ef4444}
+        .history-modal-content{flex:1;overflow-y:auto;padding:20px;max-width:800px;margin:0 auto;width:100%}
+        .history-modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+        .history-modal-stat{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px;text-align:center}
+        .history-modal-stat-value{font-size:1.8rem;font-weight:700;color:#00d4ff}
+        .history-modal-stat-label{font-size:0.7rem;color:#6b7280;margin-top:4px;text-transform:uppercase}
+        .history-modal-stat-value.negative{color:#ef4444}
+        .history-modal-stat-value.positive{color:#10b981}
+        
+        /* Warning/Alert boxes */
+        .warning-box{background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;margin-top:12px;font-size:0.75rem;color:#fbbf24}
+        .warning-box strong{display:block;margin-bottom:4px}
+        
+        .contradiction-box{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;margin-top:12px;font-size:0.75rem;color:#f87171}
+        .contradiction-box strong{display:block;margin-bottom:4px}
+        
+        /* Match Context Card Styles */
+        .context-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+        .checkbox-group{display:flex;align-items:center;gap:8px;padding:8px;background:#0a0e1a;border:1px solid #374151;border-radius:8px;cursor:pointer;transition:all 0.2s}
+        .checkbox-group:hover{border-color:#00d4ff}
+        .checkbox-group input[type="checkbox"]{width:auto;margin:0}
+        .checkbox-group label{margin:0;cursor:pointer;font-size:0.75rem}
+        
+        /* Slider styles */
+        .slider-container{margin-bottom:12px}
+        .slider-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .slider-value{font-size:0.9rem;font-weight:700;color:#00d4ff}
+        input[type="range"]{width:100%;height:8px;background:#374151;border-radius:4px;outline:none;padding:0;-webkit-appearance:none}
+        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#00d4ff;border-radius:50%;cursor:pointer}
+        input[type="range"]::-moz-slider-thumb{width:20px;height:20px;background:#00d4ff;border-radius:50%;cursor:pointer;border:none}
+        
+        /* Position indicator */
+        .position-indicator{display:flex;align-items:center;gap:6px;font-size:0.75rem}
+        .position-arrow{font-size:1rem}
+        .position-arrow.up{color:#10b981}
+        .position-arrow.down{color:#ef4444}
+        .position-arrow.flat{color:#6b7280}
+        
+        /* Confidence tier badge */
+        .confidence-tier{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:0.65rem;font-weight:700;margin-left:8px}
+        .tier-moderate{background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid #f59e0b}
+        .tier-strong{background:rgba(0,212,255,0.15);color:#00d4ff;border:1px solid #00d4ff}
+        .tier-high{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid #10b981}
+        
+        /* Explanation text */
+        .explanation-text{font-size:0.7rem;color:#9ca3af;margin-top:8px;padding:8px;background:#0a0e1a;border-radius:6px;border-left:3px solid #00d4ff}
+        
+
+        .history-meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:.68rem;color:#9ca3af}.history-meta-row span{background:#111827;border:1px solid #253041;border-radius:999px;padding:4px 7px}.history-meta-row b{color:#f3f4f6;margin-left:2px}
+
+        .trend-indicator{display:inline-flex;align-items:center;gap:4px;font-size:0.9rem}
+        .trend-up{color:#10b981}
+        .trend-down{color:#ef4444}
+        .trend-flat{color:#6b7280}
+        
+        @media(max-width:480px){
+            .team-section{grid-template-columns:1fr}
+            .probabilities-grid{grid-template-columns:repeat(2,1fr)}
+            .score-grid{grid-template-columns:repeat(3,1fr)}
+            .history-modal-stats{grid-template-columns:repeat(2,1fr)}
+            .context-grid{grid-template-columns:1fr}
+            .stats-grid-3{grid-template-columns:repeat(2,1fr)}
+        }
+        .match-brief-section{margin-top:16px;padding:14px 15px;background:#111827;border:1px solid #253041;border-radius:12px}
+        .match-brief{font-size:.88rem;line-height:1.55;color:#d1d5db}
+        .match-brief-intro{font-size:.74rem;color:#9ca3af;margin-top:-6px;margin-bottom:10px}
+        .match-brief{font-size:.9rem;line-height:1.65;color:#d1d5db}
+        .match-brief strong{color:#f3f4f6}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FootySimp</h1>
+        <p class="subtitle">xG-Powered Prediction Engine v2.0</p>
+        
+        <div class="card">
+            <div class="card-title">Quick Preset</div>
+            <select id="leaguePreset" onchange="applyPreset()">
+                <option value="">-- Select a league --</option>
+                <optgroup label="Low Scoring (Under Bias)">
+                    <option value="ligue1">Ligue 1 (2.0 goals)</option>
+                    <option value="ligue2">Ligue 2 (1.9 goals)</option>
+                    <option value="laliga2">La Liga 2 (2.1 goals)</option>
+                    <option value="serieb">Serie B (2.2 goals)</option>
+                    <option value="primeira">Primeira Liga (2.3 goals)</option>
+                    <option value="greek">Greek Super League (1.9 goals)</option>
+                </optgroup>
+                <optgroup label="Noisy Middle (Avoid)">
+                    <option value="epl">Premier League (2.7 goals)</option>
+                    <option value="laliga">La Liga (2.6 goals)</option>
+                    <option value="seriea">Serie A (2.8 goals)</option>
+                    <option value="bundesliga2">2. Bundesliga (2.7 goals)</option>
+                    <option value="championship">Championship (2.6 goals)</option>
+                    <option value="ucl">Champions League (2.8 goals)</option>
+                </optgroup>
+                <optgroup label="High Scoring (Over Bias)">
+                    <option value="bundesliga">Bundesliga (3.2 goals)</option>
+                    <option value="eredivisie">Eredivisie (3.4 goals)</option>
+                    <option value="spl">Scottish Premiership (3.1 goals)</option>
+                    <option value="proleague">Belgian Pro League (3.0 goals)</option>
+                    <option value="superlig">Turkish Super Lig (3.2 goals)</option>
+                    <option value="mls">MLS (3.3 goals)</option>
+                    <option value="ligue1w">Ligue 1 Women (3.5 goals)</option>
+                    <option value="eerste">Eerste Divisie (3.6 goals)</option>
+                </optgroup>
+                <optgroup label="Custom">
+                    <option value="custom">Custom Entry</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Match Setup</div>
+            <div class="input-group">
+                <label>Home Team</label>
+                <input type="text" id="homeTeam" placeholder="e.g. Manchester City" oninput="saveFormData()"/>
+            </div>
+            <!-- Home Form: enter actual scores, most recent first -->
+            <div class="form-selector-compact score-form">
+                <div class="form-selector-label">
+                    <span>Home Form — Last 5</span>
+                    <small>Enter team goals - opponent goals · most recent first</small>
+                </div>
+                <div class="score-inputs" id="homeFormScores">
+                    <div class="score-row"><span>1</span><input class="form-score" data-team="home" data-index="0" inputmode="text" maxlength="5" placeholder="2-1" aria-label="Home most recent score"></div>
+                    <div class="score-row"><span>2</span><input class="form-score" data-team="home" data-index="1" inputmode="text" maxlength="5" placeholder="1-1" aria-label="Home second most recent score"></div>
+                    <div class="score-row"><span>3</span><input class="form-score" data-team="home" data-index="2" inputmode="text" maxlength="5" placeholder="0-1" aria-label="Home third most recent score"></div>
+                    <div class="score-row"><span>4</span><input class="form-score" data-team="home" data-index="3" inputmode="text" maxlength="5" placeholder="3-0" aria-label="Home fourth most recent score"></div>
+                    <div class="score-row"><span>5</span><input class="form-score" data-team="home" data-index="4" inputmode="text" maxlength="5" placeholder="2-2" aria-label="Home fifth most recent score"></div>
+                </div>
+                <div class="form-summary-grid">
+                    <div><b id="homeFormRecord">—</b><small>W/D/L</small></div>
+                    <div><b id="homeFormPoints">0</b><small>Points</small></div>
+                    <div><b id="homeFormPPG">0.00</b><small>PPG</small></div>
+                    <div><b id="homeFormGD">0</b><small>Goal diff.</small></div>
+                </div>
+                <div class="form-result"><span id="homeFormDetail">0 games · 0 scored · 0 conceded</span><span class="form-weighted" id="homeWeightedPoints">weighted: 0.0</span></div>
+            </div>
+            <input type="hidden" id="homeForm" value="0"/>
+            
+            <div class="input-group" style="margin-top:16px">
+                <label>Away Team</label>
+                <input type="text" id="awayTeam" placeholder="e.g. Liverpool" oninput="saveFormData()"/>
+            </div>
+            <!-- Away Form: enter actual scores, most recent first -->
+            <div class="form-selector-compact score-form">
+                <div class="form-selector-label">
+                    <span>Away Form — Last 5</span>
+                    <small>Enter team goals - opponent goals · most recent first</small>
+                </div>
+                <div class="score-inputs" id="awayFormScores">
+                    <div class="score-row"><span>1</span><input class="form-score" data-team="away" data-index="0" inputmode="text" maxlength="5" placeholder="2-1" aria-label="Away most recent score"></div>
+                    <div class="score-row"><span>2</span><input class="form-score" data-team="away" data-index="1" inputmode="text" maxlength="5" placeholder="1-1" aria-label="Away second most recent score"></div>
+                    <div class="score-row"><span>3</span><input class="form-score" data-team="away" data-index="2" inputmode="text" maxlength="5" placeholder="0-1" aria-label="Away third most recent score"></div>
+                    <div class="score-row"><span>4</span><input class="form-score" data-team="away" data-index="3" inputmode="text" maxlength="5" placeholder="3-0" aria-label="Away fourth most recent score"></div>
+                    <div class="score-row"><span>5</span><input class="form-score" data-team="away" data-index="4" inputmode="text" maxlength="5" placeholder="2-2" aria-label="Away fifth most recent score"></div>
+                </div>
+                <div class="form-summary-grid">
+                    <div><b id="awayFormRecord">—</b><small>W/D/L</small></div>
+                    <div><b id="awayFormPoints">0</b><small>Points</small></div>
+                    <div><b id="awayFormPPG">0.00</b><small>PPG</small></div>
+                    <div><b id="awayFormGD">0</b><small>Goal diff.</small></div>
+                </div>
+                <div class="form-result"><span id="awayFormDetail">0 games · 0 scored · 0 conceded</span><span class="form-weighted" id="awayWeightedPoints">weighted: 0.0</span></div>
+            </div>
+            <input type="hidden" id="awayForm" value="0"/>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Core Stats (Required)</div>
+            <div class="team-section">
+                <div class="team-card home">
+                    <div class="team-label">Home Team</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">xG (Attack) <span class="auto-badge">AUTO</span></div>
+                            <input type="number" id="homeXG" class="stat-input auto-stat" placeholder="Calculated from last 5" step="0.01" min="0" max="5" readonly aria-readonly="true"/><div class="xg-estimate-note" id="homeXGNote">League prior · enter last-5 scores to replace the prior</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">xGA (Defense) <span class="auto-badge">AUTO</span></div>
+                            <input type="number" id="homeXGA" class="stat-input auto-stat" placeholder="Calculated from last 5" step="0.01" min="0" max="5" readonly aria-readonly="true"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card away">
+                    <div class="team-label">Away Team</div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">xG (Attack) <span class="auto-badge">AUTO</span></div>
+                            <input type="number" id="awayXG" class="stat-input auto-stat" placeholder="Calculated from last 5" step="0.01" min="0" max="5" readonly aria-readonly="true"/><div class="xg-estimate-note" id="awayXGNote">League prior · enter last-5 scores to replace the prior</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">xGA (Defense) <span class="auto-badge">AUTO</span></div>
+                            <input type="number" id="awayXGA" class="stat-input auto-stat" placeholder="Calculated from last 5" step="0.01" min="0" max="5" readonly aria-readonly="true"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="hint" id="xgAutoHint">xG/xGA are automatically estimated from the actual last-5 scores. The estimate uses recency weighting and shrinks toward the selected league preset. These are <b>score-based xG proxies</b>, not provider-reported shot-based xG.</div>
+            <div class="error-hint" id="coreError">Please enter valid xG values (0-5)</div>
+        </div>
+
+        <!-- Table Position & Context -->
+        <div class="card">
+            <div class="advanced-toggle" onclick="toggleTableContext()" id="tableContextToggle">
+                <span>Table Position & Context</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+            <div class="advanced-stats" id="tableContextStats">
+                <div class="team-section">
+                    <div class="team-card home">
+                        <div class="team-label">Home Team</div>
+                        <div class="stat-box">
+                            <div class="stat-label">League Position</div>
+                            <select id="homePosition" class="stat-input" onchange="saveFormData();updateImportanceFromTable()" style="font-size:0.85rem">
+                                <option value="">Not entered</option>
+                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="team-card away">
+                        <div class="team-label">Away Team</div>
+                        <div class="stat-box">
+                            <div class="stat-label">League Position</div>
+                            <select id="awayPosition" class="stat-input" onchange="saveFormData();updateImportanceFromTable()" style="font-size:0.85rem">
+                                <option value="">Not entered</option>
+                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="hint">Optional. Table position can automatically influence match context and importance.</div>
+            </div>
+        </div>
+
+        <!-- Match Context -->
+        <div class="card">
+            <div class="advanced-toggle" onclick="toggleMatchContext()" id="matchContextToggle">
+                <span>Match Context & Key Factors</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+            <div class="advanced-stats" id="matchContextStats">
+                <!-- Match Importance Slider -->
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <label>Match Importance</label>
+                        <span class="slider-value" id="importanceValue">Normal (3)</span>
+                    </div>
+                    <input type="range" id="matchImportance" min="1" max="5" value="3" step="1" oninput="updateImportanceDisplay();saveFormData()"/>
+                    <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#6b7280;margin-top:4px">
+                        <span>Dead Rubber</span>
+                        <span>Normal</span>
+                        <span>Title/Relegation</span>
+                    </div>
+                    <div class="hint" id="importanceAutoHint">Enter both league positions to auto-set importance, or adjust it manually.</div>
+                </div>
+                
+                <!-- Key Player Availability -->
+                <div class="card-title" style="margin-top:16px">Key Player Availability</div>
+                <div class="context-grid">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="homeTopScorerMissing" onchange="saveFormData()"/>
+                        <label for="homeTopScorerMissing">Home Top Scorer Missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="homeKeeperMissing" onchange="saveFormData()"/>
+                        <label for="homeKeeperMissing">Home Keeper Missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="homeDefenderMissing" onchange="saveFormData()"/>
+                        <label for="homeDefenderMissing">Home Defender Missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="awayTopScorerMissing" onchange="saveFormData()"/>
+                        <label for="awayTopScorerMissing">Away Top Scorer Missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="awayKeeperMissing" onchange="saveFormData()"/>
+                        <label for="awayKeeperMissing">Away Keeper Missing</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="awayDefenderMissing" onchange="saveFormData()"/>
+                        <label for="awayDefenderMissing">Away Defender Missing</label>
+                    </div>
+                </div>
+                
+                <!-- Fixture Congestion -->
+                <div class="card-title" style="margin-top:16px">Fixture Congestion</div>
+                <div class="context-grid">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="fixtureCongestion" onchange="saveFormData()"/>
+                        <label for="fixtureCongestion">3+ Games in 7 Days</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="midweekEuropean" onchange="saveFormData()"/>
+                        <label for="midweekEuropean">Midweek European Game</label>
+                    </div>
+                </div>
+                
+                <!-- Weather Conditions -->
+                <div class="card-title" style="margin-top:16px">Weather Conditions</div>
+                <div class="input-group">
+                    <select id="weatherConditions" onchange="saveFormData()" style="font-size:0.9rem">
+                        <option value="good">Good Conditions</option>
+                        <option value="rain">Rainy/Wet</option>
+                        <option value="wind">Windy</option>
+                        <option value="snow">Cold/Snow</option>
+                    </select>
+                    <div class="hint" id="weatherHint"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="advanced-toggle" onclick="toggleAdvanced()" id="advancedToggle">
+                <span>Auto-Derived Stats</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </div>
+            <div class="advanced-stats" id="advancedStats">
+                <div class="team-section">
+                    <div class="team-card home">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-label">Clean Sheet % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="homeCS" class="stat-input auto-stat" placeholder="30" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Over 2.5 % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="homeOver25" class="stat-input auto-stat" placeholder="55" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">BTTS % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="homeBTTS" class="stat-input auto-stat" placeholder="50" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-card away">
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-label">Clean Sheet % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="awayCS" class="stat-input auto-stat" placeholder="20" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">Over 2.5 % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="awayOver25" class="stat-input auto-stat" placeholder="45" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">BTTS % <span class="auto-badge">AUTO</span></div>
+                                <input type="number" id="awayBTTS" class="stat-input auto-stat" placeholder="55" step="1" min="0" max="100" oninput="validateAndSave(this)" readonly aria-readonly="true"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hint">These percentages are automatically calculated from the last 5 scores. If fewer than 5 scores are entered, the app uses the available matches; league preset values provide a fallback when no scores are entered.</div>
+            </div>
+        </div>
+
+        <button class="btn" id="predictBtn" onclick="predict()">CALCULATE PREDICTION</button>
+        <button class="reset-btn" onclick="resetForm()">Reset All</button>
+
+        <div id="resultCard" class="card result-card">
+            <div class="card-title">Prediction Result</div>
+            <div class="match-brief-section" style="margin-top:12px">
+                <div class="analysis-title">What to Expect</div>
+                <div class="match-brief-intro">A quick match brief based on the model's analysis.</div>
+                <div id="matchBrief" class="match-brief">Calculate a prediction to see what the model expects from this match.</div>
+            </div>
+            
+            <div class="card-title" style="margin-top:16px">Market Probabilities</div>
+            <div class="probabilities-grid">
+                <div class="prob-item">
+                    <div class="prob-name">Over 2.5</div>
+                    <div class="prob-value" id="probOver25">-</div>
+                </div>
+                <div class="prob-item">
+                    <div class="prob-name">Under 2.5</div>
+                    <div class="prob-value" id="probUnder25">-</div>
+                </div>
+                <div class="prob-item">
+                    <div class="prob-name">BTTS Yes</div>
+                    <div class="prob-value" id="probBTTS">-</div>
+                </div>
+            </div>
+            
+            <div class="score-probabilities">
+                <div class="card-title">Most Likely Scorelines</div>
+                <div class="score-grid" id="scoreGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <div class="analysis-title">Match Analysis</div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Expected Total Goals</span>
+                    <span class="analysis-value" id="expGoals">-</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Home Expected Goals</span>
+                    <span class="analysis-value" id="homeExpGoals">-</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Away Expected Goals</span>
+                    <span class="analysis-value" id="awayExpGoals">-</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Form Advantage</span>
+                    <span class="analysis-value" id="formAdv">-</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Attack vs Defense</span>
+                    <span class="analysis-value" id="attDef">-</span>
+                </div>
+                <div class="analysis-item" id="contextFactorsRow" style="display:none">
+                    <span class="analysis-label">Context Adjustments</span>
+                    <span class="analysis-value" id="contextFactors">-</span>
+                </div>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="saveToHistory()" style="margin-top:16px;background:#1f2937;font-size:0.95rem">Save to History</button>
+        </div>
+
+        <div id="historyCard" class="card history-card">
+            <div class="card-title">
+                <span>Prediction History</span>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <span style="font-size:0.7rem;color:#6b7280" id="historyCount">0 bets</span>
+                    <button class="expand-btn" onclick="openHistoryModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h6v6"/>
+                            <path d="M9 21H3v-6"/>
+                            <path d="M21 3l-7 7"/>
+                            <path d="M3 21l7-7"/>
+                        </svg>
+                        Expand
+                    </button>
+                </div>
+            </div>
+            <div class="stats-summary">
+                <div class="stat-pill">Won: <span id="wonCount">0</span></div>
+                <div class="stat-pill">Lost: <span id="lostCount" class="negative">0</span></div>
+                <div class="stat-pill">Win Rate: <span id="winRate">0%</span></div>
+                <div class="stat-pill">ROI: <span id="roiValue">0%</span></div>
+            </div>
+            <div style="margin-bottom:12px">
+                <input type="text" class="search-box" id="searchHistory" placeholder="Search teams..." oninput="renderHistory()"/>
+            </div>
+            <div class="filter-tabs">
+                <div class="filter-tab active" onclick="filterHistory('all',this)">All</div>
+                <div class="filter-tab" onclick="filterHistory('pending',this)">Pending</div>
+                <div class="filter-tab" onclick="filterHistory('won',this)">Won</div>
+                <div class="filter-tab" onclick="filterHistory('lost',this)">Lost</div>
+            </div>
+            <div id="historyList" class="history-scroll">
+                <div class="empty-state">No predictions yet. Save your first prediction!</div>
+            </div>
+            <button class="reset-btn" onclick="clearHistory()" style="margin-top:12px">Clear All History</button>
+        </div>
+    </div>
+
+    <!-- Fullscreen History Modal -->
+    <div id="historyModal" class="history-modal">
+        <div class="history-modal-header">
+            <span class="history-modal-title">Prediction History</span>
+            <button class="history-modal-close" onclick="closeHistoryModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                </svg>
+                Close
+            </button>
+        </div>
+        <div class="history-modal-content">
+            <div class="history-modal-stats" id="modalStats">
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalTotalBets">0</div>
+                    <div class="history-modal-stat-label">Total Bets</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value positive" id="modalWon">0</div>
+                    <div class="history-modal-stat-label">Won</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value negative" id="modalLost">0</div>
+                    <div class="history-modal-stat-label">Lost</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalWinRate">0%</div>
+                    <div class="history-modal-stat-label">Win Rate</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalROI">0%</div>
+                    <div class="history-modal-stat-label">ROI</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalAvgOdds">0.00</div>
+                    <div class="history-modal-stat-label">Avg Odds</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalPending">0</div>
+                    <div class="history-modal-stat-label">Pending</div>
+                </div>
+                <div class="history-modal-stat">
+                    <div class="history-modal-stat-value" id="modalProfit">0u</div>
+                    <div class="history-modal-stat-label">Profit/Loss</div>
+                </div>
+            </div>
+            <div style="margin-bottom:16px">
+                <input type="text" class="search-box" id="modalSearchHistory" placeholder="Search teams..." oninput="renderModalHistory()"/>
+            </div>
+            <div class="filter-tabs">
+                <div class="filter-tab active" onclick="filterModalHistory('all',this)">All</div>
+                <div class="filter-tab" onclick="filterModalHistory('pending',this)">Pending</div>
+                <div class="filter-tab" onclick="filterModalHistory('won',this)">Won</div>
+                <div class="filter-tab" onclick="filterModalHistory('lost',this)">Lost</div>
+            </div>
+            <div id="modalHistoryList">
+                <div class="empty-state">No predictions yet. Save your first prediction!</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Calculating Poisson probabilities...</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // League presets with xG averages and variance factors
+        // leagueAvg: average goals per game for the league (used for validation rules)
+        const presets = {
+            // Low Scoring (Under Bias)
+            ligue1: { homeXG: 1.35, homeXGA: 1.15, awayXG: 1.05, awayXGA: 1.25, homeOver25: 42, awayOver25: 40, variance: 0.93, threshold: 68, leagueAvg: 2.0 },
+            ligue2: { homeXG: 1.25, homeXGA: 1.20, awayXG: 0.95, awayXGA: 1.35, homeOver25: 38, awayOver25: 36, variance: 0.90, threshold: 68, leagueAvg: 1.9 },
+            laliga2: { homeXG: 1.30, homeXGA: 1.25, awayXG: 1.05, awayXGA: 1.45, homeOver25: 42, awayOver25: 40, variance: 0.92, threshold: 68, leagueAvg: 2.1 },
+            serieb: { homeXG: 1.40, homeXGA: 1.35, awayXG: 1.15, awayXGA: 1.55, homeOver25: 46, awayOver25: 44, variance: 0.98, threshold: 66, leagueAvg: 2.2 },
+            primeira: { homeXG: 1.60, homeXGA: 1.30, awayXG: 1.30, awayXGA: 1.50, homeOver25: 52, awayOver25: 48, variance: 0.98, threshold: 65, leagueAvg: 2.3 },
+            greek: { homeXG: 1.25, homeXGA: 1.20, awayXG: 0.95, awayXGA: 1.35, homeOver25: 38, awayOver25: 36, variance: 0.90, threshold: 68, leagueAvg: 1.9 },
+            // Noisy Middle (Avoid)
+            epl: { homeXG: 1.65, homeXGA: 1.25, awayXG: 1.35, awayXGA: 1.45, homeOver25: 55, awayOver25: 50, variance: 1.0, threshold: 60, leagueAvg: 2.7 },
+            laliga: { homeXG: 1.45, homeXGA: 1.15, awayXG: 1.15, awayXGA: 1.35, homeOver25: 48, awayOver25: 45, variance: 0.95, threshold: 65, leagueAvg: 2.6 },
+            seriea: { homeXG: 1.55, homeXGA: 1.25, awayXG: 1.25, awayXGA: 1.45, homeOver25: 50, awayOver25: 48, variance: 0.97, threshold: 65, leagueAvg: 2.8 },
+            bundesliga2: { homeXG: 1.70, homeXGA: 1.50, awayXG: 1.40, awayXGA: 1.70, homeOver25: 58, awayOver25: 54, variance: 1.06, threshold: 63, leagueAvg: 2.7 },
+            championship: { homeXG: 1.55, homeXGA: 1.35, awayXG: 1.25, awayXGA: 1.55, homeOver25: 52, awayOver25: 48, variance: 1.02, threshold: 64, leagueAvg: 2.6 },
+            ucl: { homeXG: 1.60, homeXGA: 1.30, awayXG: 1.35, awayXGA: 1.50, homeOver25: 54, awayOver25: 50, variance: 1.0, threshold: 65, leagueAvg: 2.8 },
+            // High Scoring (Over Bias)
+            bundesliga: { homeXG: 1.85, homeXGA: 1.45, awayXG: 1.55, awayXGA: 1.65, homeOver25: 62, awayOver25: 58, variance: 1.08, threshold: 62, leagueAvg: 3.2 },
+            eredivisie: { homeXG: 1.95, homeXGA: 1.55, awayXG: 1.65, awayXGA: 1.75, homeOver25: 65, awayOver25: 62, variance: 1.1, threshold: 62, leagueAvg: 3.4 },
+            spl: { homeXG: 1.75, homeXGA: 1.45, awayXG: 1.45, awayXGA: 1.65, homeOver25: 58, awayOver25: 54, variance: 1.05, threshold: 63, leagueAvg: 3.1 },
+            proleague: { homeXG: 1.75, homeXGA: 1.40, awayXG: 1.45, awayXGA: 1.60, homeOver25: 58, awayOver25: 54, variance: 1.05, threshold: 63, leagueAvg: 3.0 },
+            superlig: { homeXG: 1.80, homeXGA: 1.50, awayXG: 1.50, awayXGA: 1.70, homeOver25: 60, awayOver25: 56, variance: 1.06, threshold: 63, leagueAvg: 3.2 },
+            mls: { homeXG: 1.70, homeXGA: 1.50, awayXG: 1.45, awayXGA: 1.60, homeOver25: 56, awayOver25: 52, variance: 1.04, threshold: 64, leagueAvg: 3.3 },
+            ligue1w: { homeXG: 2.00, homeXGA: 1.60, awayXG: 1.70, awayXGA: 1.80, homeOver25: 68, awayOver25: 65, variance: 1.12, threshold: 60, leagueAvg: 3.5 },
+            eerste: { homeXG: 2.05, homeXGA: 1.65, awayXG: 1.75, awayXGA: 1.85, homeOver25: 70, awayOver25: 66, variance: 1.15, threshold: 60, leagueAvg: 3.6 },
+            // Custom
+            custom: { homeXG: 1.50, homeXGA: 1.40, awayXG: 1.20, awayXGA: 1.50, homeOver25: 50, awayOver25: 45, variance: 1.0, threshold: 65, leagueAvg: 2.5 }
+        };
+
+        // Form weights for exponential decay (most recent = highest weight)
+        const formWeights = [1.0, 0.8, 0.6, 0.4, 0.2];
+        
+        // Opponent strength multipliers
+        const opponentStrengthMultipliers = {
+            strong: 1.2,  // opponent xG > 1.6
+            normal: 1.0,  // opponent xG 1.0-1.6
+            weak: 0.8     // opponent xG < 1.0
+        };
+
+        let currentPrediction = null;
+        let historyFilter = 'all';
+        let modalHistoryFilter = 'all';
+        let selectedPreset = null;
+
+        // Form state: actual scores, most recent first.
+        const formState = {
+            home: { scores: ['', '', '', '', ''], results: ['empty','empty','empty','empty','empty'], opponentStrength: ['normal','normal','normal','normal','normal'] },
+            away: { scores: ['', '', '', '', ''], results: ['empty','empty','empty','empty','empty'], opponentStrength: ['normal','normal','normal','normal','normal'] }
+        };
+
+        // Importance labels
+        const importanceLabels = {
+            1: 'Dead Rubber',
+            2: 'Low Stakes',
+            3: 'Normal',
+            4: 'High Stakes',
+            5: 'Title/Relegation'
+        };
+
+        // Weather impact on goals
+        const weatherImpact = {
+            good: { multiplier: 1.0, hint: '' },
+            rain: { multiplier: 0.88, hint: 'Rain typically reduces goal totals by ~12%' },
+            wind: { multiplier: 0.92, hint: 'Wind can disrupt passing and reduce goals' },
+            snow: { multiplier: 0.85, hint: 'Cold/snow conditions favor defenses' }
+        };
+
+        function parseScore(value) {
+            const m = String(value || '').trim().match(/^(\d{1,2})\s*[-:]\s*(\d{1,2})$/);
+            if (!m) return null;
+            const gf = Number(m[1]), ga = Number(m[2]);
+            if (gf < 0 || ga < 0 || gf > 30 || ga > 30) return null;
+            return { gf, ga };
+        }
+
+        function scoreToResult(score) {
+            if (!score) return 'empty';
+            return score.gf > score.ga ? 'win' : score.gf === score.ga ? 'draw' : 'loss';
+        }
+
+        // Score-based xG/xGA proxy. This is deliberately NOT presented as true provider xG:
+        // final scores cannot recover shot quality. Recent matches are weighted 30/25/20/15/10%.
+        function getLeaguePrior(team) {
+            const p = (selectedPreset && presets[selectedPreset]) ? presets[selectedPreset] : null;
+            if (team === 'home') return { xg: p ? p.homeXG : 1.50, xga: p ? p.homeXGA : 1.40 };
+            return { xg: p ? p.awayXG : 1.20, xga: p ? p.awayXGA : 1.50 };
+        }
+
+        function calculateScoreBasedXG(team) {
+            const state = formState[team];
+            const weights = [0.30, 0.25, 0.20, 0.15, 0.10];
+            let weightedGF = 0, weightedGA = 0, weightTotal = 0, games = 0;
+            state.scores.forEach((value, i) => {
+                const score = parseScore(value);
+                if (!score) return;
+                const w = weights[i];
+                weightedGF += score.gf * w;
+                weightedGA += score.ga * w;
+                weightTotal += w;
+                games++;
+            });
+            const prior = getLeaguePrior(team);
+            if (!games || !weightTotal) return { xg: prior.xg, xga: prior.xga, games: 0, observedGF: 0, observedGA: 0 };
+            const recencyGF = weightedGF / weightTotal;
+            const recencyGA = weightedGA / weightTotal;
+            // 60% recent observed scoring + 40% league/team prior reduces small-sample noise.
+            const xg = Math.max(0.20, Math.min(4.50, recencyGF * 0.60 + prior.xg * 0.40));
+            const xga = Math.max(0.20, Math.min(4.50, recencyGA * 0.60 + prior.xga * 0.40));
+            return { xg, xga, games, observedGF: recencyGF, observedGA: recencyGA };
+        }
+
+        function updateAutoXGFromForm(team) {
+            const est = calculateScoreBasedXG(team);
+            const xgEl = document.getElementById(team + 'XG');
+            const xgaEl = document.getElementById(team + 'XGA');
+            if (xgEl) xgEl.value = est.xg.toFixed(2);
+            if (xgaEl) xgaEl.value = est.xga.toFixed(2);
+            const note = document.getElementById(team + 'XGNote');
+            if (note) {
+                note.textContent = est.games
+                    ? `${est.games}/5 scores · recency-weighted · ${est.xg.toFixed(2)} xG / ${est.xga.toFixed(2)} xGA`
+                    : `League prior · enter last-5 scores to replace the prior`;
+            }
+            const hint = document.getElementById('xgAutoHint');
+            if (hint) {
+                const h = calculateScoreBasedXG('home'), a = calculateScoreBasedXG('away');
+                hint.innerHTML = `AUTO uses ${h.games}/5 home and ${a.games}/5 away scores. <b>Score-based xG proxies</b> blend recency-weighted goals (60%) with the selected league prior (40%). True xG requires shot-quality data.`;
+            }
+        }
+
+        function updateFormFromScores(team) {
+            const state = formState[team];
+            const inputs = document.querySelectorAll(`.form-score[data-team="${team}"]`);
+            inputs.forEach((input, i) => state.scores[i] = input.value.trim());
+            state.results = state.scores.map(v => scoreToResult(parseScore(v)));
+            updateFormDisplay(team);
+            calculateWeightedFormPoints(team);
+            updateAutoXGFromForm(team);
+            
+            saveFormData();
+        }
+
+        function updateFormDisplay(team) {
+            const state = formState[team];
+            const record = { win: 0, draw: 0, loss: 0 };
+            let points = 0, gf = 0, ga = 0, valid = 0, clean = 0, over25 = 0, btts = 0;
+            state.results.forEach((result, i) => {
+                const score = parseScore(state.scores[i]);
+                if (!score) return;
+                valid++;
+                record[result]++;
+                points += result === 'win' ? 3 : result === 'draw' ? 1 : 0;
+                gf += score.gf; ga += score.ga;
+                if (score.ga === 0) clean++;
+                if (score.gf + score.ga > 2.5) over25++;
+                if (score.gf > 0 && score.ga > 0) btts++;
+            });
+            const recordText = valid ? `${record.win}W ${record.draw}D ${record.loss}L` : '—';
+            document.getElementById(team + 'FormRecord').textContent = recordText;
+            document.getElementById(team + 'FormPoints').textContent = points;
+            document.getElementById(team + 'FormPPG').textContent = valid ? (points / valid).toFixed(2) : '0.00';
+            document.getElementById(team + 'FormGD').textContent = valid ? (gf - ga > 0 ? '+' : '') + (gf - ga) : '0';
+            document.getElementById(team + 'FormDetail').textContent = `${valid} game${valid === 1 ? '' : 's'} · ${gf} scored · ${ga} conceded · ${clean} CS · ${over25} O2.5 · ${btts} BTTS`;
+            document.getElementById(team + 'Form').value = points;
+            updateAutoDerivedStats(team);
+            updateSparkline(team);
+        }
+
+        function updateAutoDerivedStats(team) {
+            const state = formState[team];
+            const validScores = state.scores.map(parseScore).filter(Boolean);
+            const cs = validScores.length ? (validScores.filter(s => s.ga === 0).length / validScores.length) * 100 : null;
+            const over25 = validScores.length ? (validScores.filter(s => s.gf + s.ga >= 3).length / validScores.length) * 100 : null;
+            const btts = validScores.length ? (validScores.filter(s => s.gf > 0 && s.ga > 0).length / validScores.length) * 100 : null;
+            const ids = { cs: team + 'CS', over25: team + 'Over25', btts: team + 'BTTS' };
+            const prior = (selectedPreset && presets[selectedPreset]) ? presets[selectedPreset] : null;
+            const fallback = team === 'home' ? {cs: 25, over25: prior?.homeOver25 ?? 50, btts: 50} : {cs: 20, over25: prior?.awayOver25 ?? 45, btts: 50};
+            document.getElementById(ids.cs).value = (cs ?? fallback.cs).toFixed(0);
+            document.getElementById(ids.over25).value = (over25 ?? fallback.over25).toFixed(0);
+            document.getElementById(ids.btts).value = (btts ?? fallback.btts).toFixed(0);
+        }
+
+        function updateSparkline(team) {
+            const sparkline = document.getElementById(team + 'Sparkline');
+            if (!sparkline) return;
+            sparkline.innerHTML = formState[team].results.map(r => {
+                const height = r === 'win' ? '100%' : r === 'draw' ? '60%' : r === 'loss' ? '30%' : '10%';
+                return `<div class="spark-bar ${r === 'empty' ? '' : r}" style="height:${height}"></div>`;
+            }).join('');
+        }
+
+        function calculateFormPoints(team) {
+            const state = formState[team];
+            let points = 0;
+            state.results.forEach(r => { if (r === 'win') points += 3; else if (r === 'draw') points += 1; });
+            document.getElementById(team + 'FormPoints').textContent = points;
+            document.getElementById(team + 'Form').value = points;
+            return points;
+        }
+
+        // Weighted score-based form. Recent matches carry more weight; opponent-strength modifier is retained.
+        function calculateWeightedFormPoints(team) {
+            const state = formState[team];
+            let weightedPoints = 0, maxPossible = 0;
+            state.scores.forEach((value, index) => {
+                const score = parseScore(value);
+                if (!score) return;
+                const weight = formWeights[index];
+                const mult = opponentStrengthMultipliers[state.opponentStrength[index] || 'normal'];
+                const pts = score.gf > score.ga ? 3 : score.gf === score.ga ? 1 : 0;
+                weightedPoints += pts * weight * mult;
+                maxPossible += 3 * weight * mult;
+            });
+            const normalized = maxPossible ? (weightedPoints / maxPossible) * 15 : 0;
+            document.getElementById(team + 'WeightedPoints').textContent = `weighted: ${normalized.toFixed(1)}`;
+            document.getElementById(team + 'Form').value = normalized.toFixed(2);
+            return normalized;
+        }
+
+        function attachScoreInputs() {
+            document.querySelectorAll('.form-score').forEach(input => {
+                input.addEventListener('input', () => {
+                    // Keep score entry permissive while typing: 2 → 2- → 2-1.
+                    // Do not validate until the user has finished the score.
+                    let v = input.value.replace(/[^0-9:-]/g, '').replace(/:/g, '-');
+                    const dash = v.indexOf('-');
+                    if (dash !== -1) {
+                        v = v.slice(0, dash + 1) + v.slice(dash + 1).replace(/-/g, '');
+                    }
+                    // Limit each side to two digits, but never remove the separator.
+                    const parts = v.split('-');
+                    if (parts.length === 2) v = parts[0].slice(0, 2) + '-' + parts[1].slice(0, 2);
+                    else v = v.slice(0, 2);
+                    input.value = v;
+                    updateFormFromScores(input.dataset.team);
+                });
+                input.addEventListener('blur', () => {
+                    if (input.value && !parseScore(input.value)) input.classList.add('input-error');
+                    else input.classList.remove('input-error');
+                });
+            });
+        }
+
+        // Update form trajectory display
+        function updateFormTrajectory() { /* Season PPG removed; momentum is derived directly from weighted recent form. */ }
+
+        // Update importance slider display
+        function updateImportanceDisplay() {
+            const value = document.getElementById('matchImportance').value;
+            document.getElementById('importanceValue').textContent = `${importanceLabels[value]} (${value})`;
+        }
+
+        function inferMatchImportance(homePos, awayPos) {
+            if (!homePos || !awayPos) return null;
+            const h = Number(homePos), a = Number(awayPos);
+            if ((h <= 7 && a <= 7) || (h >= 15 && a >= 15)) return 5;
+            if ((h <= 7 && a >= 15) || (a <= 7 && h >= 15)) return 4;
+            if (h >= 8 && h <= 14 && a >= 8 && a <= 14) return 2;
+            return 3;
+        }
+
+        function updateImportanceFromTable() {
+            const h = parseInt(document.getElementById('homePosition').value) || 0;
+            const a = parseInt(document.getElementById('awayPosition').value) || 0;
+            const inferred = inferMatchImportance(h, a);
+            const slider = document.getElementById('matchImportance');
+            const hint = document.getElementById('importanceAutoHint');
+            if (inferred === null) {
+                slider.disabled = false;
+                if (hint) hint.textContent = 'Enter both league positions to auto-set importance, or adjust it manually.';
+                updateImportanceDisplay();
+                return;
+            }
+            slider.value = String(inferred);
+            slider.disabled = true;
+            updateImportanceDisplay();
+            if (hint) hint.textContent = `Auto from table positions: ${importanceLabels[inferred]}`;
+            saveFormData();
+        }
+
+        // Update weather hint
+        function updateWeatherHint() {
+            const weather = document.getElementById('weatherConditions').value;
+            const hint = document.getElementById('weatherHint');
+            const impact = weatherImpact[weather];
+            hint.textContent = impact.hint;
+        }
+
+        // Toggle sections
+        function toggleTableContext() {
+            const toggle = document.getElementById('tableContextToggle');
+            const stats = document.getElementById('tableContextStats');
+            toggle.classList.toggle('expanded');
+            stats.classList.toggle('show');
+            saveToggleState();
+        }
+
+        function toggleMatchContext() {
+            const toggle = document.getElementById('matchContextToggle');
+            const stats = document.getElementById('matchContextStats');
+            toggle.classList.toggle('expanded');
+            stats.classList.toggle('show');
+            saveToggleState();
+        }
+
+
+        function toggleAdvanced() {
+            const toggle = document.getElementById('advancedToggle');
+            const stats = document.getElementById('advancedStats');
+            toggle.classList.toggle('expanded');
+            stats.classList.toggle('show');
+            saveToggleState();
+        }
+
+        function saveToggleState() {
+            const toggleState = {
+                tableContext: document.getElementById('tableContextStats').classList.contains('show'),
+                matchContext: document.getElementById('matchContextStats').classList.contains('show'),
+                advanced: document.getElementById('advancedStats').classList.contains('show')
+            };
+            localStorage.setItem('oup_toggleState', JSON.stringify(toggleState));
+        }
+
+        function loadToggleState() {
+            const toggleState = JSON.parse(localStorage.getItem('oup_toggleState') || '{}');
+            
+            if (toggleState.tableContext) {
+                document.getElementById('tableContextToggle').classList.add('expanded');
+                document.getElementById('tableContextStats').classList.add('show');
+            }
+            if (toggleState.matchContext) {
+                document.getElementById('matchContextToggle').classList.add('expanded');
+                document.getElementById('matchContextStats').classList.add('show');
+            }
+            if (toggleState.advanced) {
+                document.getElementById('advancedToggle').classList.add('expanded');
+                document.getElementById('advancedStats').classList.add('show');
+            }
+        }
+
+        // Poisson probability calculation
+        function poissonProb(lambda, k) {
+            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        // Calculate goal probabilities using Poisson
+        function calculateGoalProbabilities(homeLambda, awayLambda) {
+            const maxGoals = 8;
+            const homeProbs = [];
+            const awayProbs = [];
+            
+            for (let i = 0; i <= maxGoals; i++) {
+                homeProbs.push(poissonProb(homeLambda, i));
+                awayProbs.push(poissonProb(awayLambda, i));
+            }
+            
+            // Calculate scoreline probabilities
+            const scorelines = [];
+            for (let h = 0; h <= maxGoals; h++) {
+                for (let a = 0; a <= maxGoals; a++) {
+                    const prob = homeProbs[h] * awayProbs[a];
+                    scorelines.push({ home: h, away: a, prob: prob });
+                }
+            }
+            
+            // Sort by probability
+            scorelines.sort((a, b) => b.prob - a.prob);
+
+            // Aggregate result probabilities from ALL scorelines rather than
+            // assigning the winner from the single most-likely scoreline.
+            let homeWinProb = 0, drawProb = 0, awayWinProb = 0;
+            scorelines.forEach(s => {
+                if (s.home > s.away) homeWinProb += s.prob;
+                else if (s.home === s.away) drawProb += s.prob;
+                else awayWinProb += s.prob;
+            });
+            const probabilityTotal = homeWinProb + drawProb + awayWinProb;
+            if (probabilityTotal > 0) {
+                homeWinProb /= probabilityTotal;
+                drawProb /= probabilityTotal;
+                awayWinProb /= probabilityTotal;
+            }
+            
+            // Calculate Over/Under 2.5
+            let over25Prob = 0;
+            let under25Prob = 0;
+            let bttsProb = 0;
+            
+            scorelines.forEach(s => {
+                const totalGoals = s.home + s.away;
+                if (totalGoals > 2.5) {
+                    over25Prob += s.prob;
+                } else {
+                    under25Prob += s.prob;
+                }
+                if (s.home > 0 && s.away > 0) {
+                    bttsProb += s.prob;
+                }
+            });
+            
+            return {
+                scorelines: scorelines.slice(0, 12),
+                over25: over25Prob * 100,
+                under25: under25Prob * 100,
+                btts: bttsProb * 100,
+                homeWin: homeWinProb * 100,
+                draw: drawProb * 100,
+                awayWin: awayWinProb * 100,
+                expectedTotal: homeLambda + awayLambda,
+                homeLambda,
+                awayLambda
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFormData();
+            loadToggleState();
+            renderHistory();
+            updateImportanceDisplay();
+            updateWeatherHint();
+            updateAutoXGFromForm('home');
+            updateAutoXGFromForm('away');
+            updateAutoDerivedStats('home');
+            updateAutoDerivedStats('away');
+            attachScoreInputs();
+        });
+
+        function applyPreset() {
+            selectedPreset = document.getElementById('leaguePreset').value;
+            if (selectedPreset && presets[selectedPreset]) {
+                showToast('Preset selected: ' + document.getElementById('leaguePreset').options[document.getElementById('leaguePreset').selectedIndex].text.split('(')[0].trim());
+            }
+            updateAutoXGFromForm('home');
+            updateAutoXGFromForm('away');
+            updateAutoDerivedStats('home');
+            updateAutoDerivedStats('away');
+            saveFormData();
+        }
+
+        function validateAndSave(input) {
+            const val = parseFloat(input.value);
+            const id = input.id;
+            let isValid = true;
+            
+            if (id.includes('XG')) {
+                if (val < 0 || val > 5 || isNaN(val)) isValid = false;
+            } else if (id.includes('Form')) {
+                if (val < 0 || val > 15 || isNaN(val)) isValid = false;
+            } else if (id.includes('CS') || id.includes('Over25') || id.includes('BTTS')) {
+                if (val < 0 || val > 100 || isNaN(val)) isValid = false;
+            } else if (id.includes('PPG')) {
+                if (val < 0 || val > 3 || isNaN(val)) isValid = false;
+            } else if (id.includes('position')) {
+            }
+            
+            if (!isValid && input.value !== '') {
+                input.classList.add('input-error');
+            } else {
+                input.classList.remove('input-error');
+            }
+            
+            saveFormData();
+        }
+
+        function saveFormData() {
+            const data = {
+                homeTeam: document.getElementById('homeTeam').value,
+                awayTeam: document.getElementById('awayTeam').value,
+                homeXG: document.getElementById('homeXG').value,
+                homeXGA: document.getElementById('homeXGA').value,
+                awayXG: document.getElementById('awayXG').value,
+                awayXGA: document.getElementById('awayXGA').value,
+                homeForm: document.getElementById('homeForm').value,
+                awayForm: document.getElementById('awayForm').value,
+                homeCS: document.getElementById('homeCS').value,
+                awayCS: document.getElementById('awayCS').value,
+                homeOver25: document.getElementById('homeOver25').value,
+                awayOver25: document.getElementById('awayOver25').value,
+                homeBTTS: document.getElementById('homeBTTS').value,
+                awayBTTS: document.getElementById('awayBTTS').value,
+                preset: document.getElementById('leaguePreset').value,
+                homeFormState: formState.home,
+                awayFormState: formState.away,
+                // New fields
+                homePosition: document.getElementById('homePosition').value,
+                awayPosition: document.getElementById('awayPosition').value,
+                matchImportance: document.getElementById('matchImportance').value,
+                homeTopScorerMissing: document.getElementById('homeTopScorerMissing').checked,
+                homeKeeperMissing: document.getElementById('homeKeeperMissing').checked,
+                homeDefenderMissing: document.getElementById('homeDefenderMissing').checked,
+                awayTopScorerMissing: document.getElementById('awayTopScorerMissing').checked,
+                awayKeeperMissing: document.getElementById('awayKeeperMissing').checked,
+                awayDefenderMissing: document.getElementById('awayDefenderMissing').checked,
+                fixtureCongestion: document.getElementById('fixtureCongestion').checked,
+                midweekEuropean: document.getElementById('midweekEuropean').checked,
+                weatherConditions: document.getElementById('weatherConditions').value,
+            };
+            localStorage.setItem('oup_formData', JSON.stringify(data));
+        }
+
+        function loadFormData() {
+            const data = JSON.parse(localStorage.getItem('oup_formData') || '{}');
+            if (data.homeTeam) document.getElementById('homeTeam').value = data.homeTeam;
+            if (data.awayTeam) document.getElementById('awayTeam').value = data.awayTeam;
+            if (data.homeXG) document.getElementById('homeXG').value = data.homeXG;
+            if (data.homeXGA) document.getElementById('homeXGA').value = data.homeXGA;
+            if (data.awayXG) document.getElementById('awayXG').value = data.awayXG;
+            if (data.awayXGA) document.getElementById('awayXGA').value = data.awayXGA;
+            if (data.preset) {
+                document.getElementById('leaguePreset').value = data.preset;
+                selectedPreset = data.preset;
+            }
+            
+            // Load form state
+            if (data.homeFormState) {
+                formState.home = Object.assign(formState.home, data.homeFormState);
+                formState.home.scores = Array.isArray(formState.home.scores) ? formState.home.scores : ['', '', '', '', ''];
+                formState.home.results = formState.home.scores.map(v => scoreToResult(parseScore(v)));
+                formState.home.scores.forEach((v,i)=>{ const el=document.querySelector(`.form-score[data-team=\"home\"][data-index=\"${i}\"]`); if(el) el.value=v; });
+                updateFormDisplay('home'); calculateWeightedFormPoints('home');
+            }
+            if (data.awayFormState) {
+                formState.away = Object.assign(formState.away, data.awayFormState);
+                formState.away.scores = Array.isArray(formState.away.scores) ? formState.away.scores : ['', '', '', '', ''];
+                formState.away.results = formState.away.scores.map(v => scoreToResult(parseScore(v)));
+                formState.away.scores.forEach((v,i)=>{ const el=document.querySelector(`.form-score[data-team=\"away\"][data-index=\"${i}\"]`); if(el) el.value=v; });
+                updateFormDisplay('away'); calculateWeightedFormPoints('away');
+            }
+            
+            updateAutoXGFromForm('home');
+            updateAutoXGFromForm('away');
+            updateAutoDerivedStats('home');
+            updateAutoDerivedStats('away');
+
+            // Load new fields with backward compatibility
+            if (data.homePosition) document.getElementById('homePosition').value = data.homePosition;
+            if (data.awayPosition) document.getElementById('awayPosition').value = data.awayPosition;
+            if (data.matchImportance) {
+                document.getElementById('matchImportance').value = data.matchImportance;
+                updateImportanceDisplay();
+            }
+            updateImportanceFromTable();
+            if (data.homeTopScorerMissing !== undefined) document.getElementById('homeTopScorerMissing').checked = data.homeTopScorerMissing;
+            if (data.homeKeeperMissing !== undefined) document.getElementById('homeKeeperMissing').checked = data.homeKeeperMissing;
+            if (data.homeDefenderMissing !== undefined) document.getElementById('homeDefenderMissing').checked = data.homeDefenderMissing;
+            if (data.awayTopScorerMissing !== undefined) document.getElementById('awayTopScorerMissing').checked = data.awayTopScorerMissing;
+            if (data.awayKeeperMissing !== undefined) document.getElementById('awayKeeperMissing').checked = data.awayKeeperMissing;
+            if (data.awayDefenderMissing !== undefined) document.getElementById('awayDefenderMissing').checked = data.awayDefenderMissing;
+            if (data.fixtureCongestion !== undefined) document.getElementById('fixtureCongestion').checked = data.fixtureCongestion;
+            if (data.midweekEuropean !== undefined) document.getElementById('midweekEuropean').checked = data.midweekEuropean;
+            if (data.weatherConditions) {
+                document.getElementById('weatherConditions').value = data.weatherConditions;
+                updateWeatherHint();
+            }
+            
+            
+        }
+
+        function predict() {
+            const homeTeam = document.getElementById('homeTeam').value.trim() || 'Home Team';
+            const awayTeam = document.getElementById('awayTeam').value.trim() || 'Away Team';
+            
+            // Get values from inputs or use preset defaults if fields are empty
+            let homeXG = parseFloat(document.getElementById('homeXG').value);
+            let homeXGA = parseFloat(document.getElementById('homeXGA').value);
+            let awayXG = parseFloat(document.getElementById('awayXG').value);
+            let awayXGA = parseFloat(document.getElementById('awayXGA').value);
+            
+            // If preset is selected and fields are empty, use preset values
+            if (selectedPreset && presets[selectedPreset]) {
+                const p = presets[selectedPreset];
+                if (isNaN(homeXG)) homeXG = p.homeXG;
+                if (isNaN(homeXGA)) homeXGA = p.homeXGA;
+                if (isNaN(awayXG)) awayXG = p.awayXG;
+                if (isNaN(awayXGA)) awayXGA = p.awayXGA;
+            }
+            
+            // Validation
+            if (isNaN(homeXG) || isNaN(homeXGA) || isNaN(awayXG) || isNaN(awayXGA)) {
+                showToast('Please enter xG values for both teams', true);
+                document.getElementById('coreError').classList.add('show');
+                return;
+            }
+            
+            document.getElementById('coreError').classList.remove('show');
+            
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('show');
+            
+            setTimeout(() => {
+                calculatePrediction(homeTeam, awayTeam, homeXG, homeXGA, awayXG, awayXGA);
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }, 600);
+        }
+
+        function calculatePrediction(homeTeam, awayTeam, homeXG, homeXGA, awayXG, awayXGA) {
+            // Get weighted form points
+            const homeForm = calculateWeightedFormPoints('home');
+            const awayForm = calculateWeightedFormPoints('away');
+            
+            updateAutoDerivedStats('home');
+            updateAutoDerivedStats('away');
+            // Get advanced stats
+            let homeCS = parseFloat(document.getElementById('homeCS').value);
+            let awayCS = parseFloat(document.getElementById('awayCS').value);
+            let homeOver25 = parseFloat(document.getElementById('homeOver25').value);
+            let awayOver25 = parseFloat(document.getElementById('awayOver25').value);
+            let homeBTTS = parseFloat(document.getElementById('homeBTTS').value);
+            let awayBTTS = parseFloat(document.getElementById('awayBTTS').value);
+            
+            // Get table position & points context
+            const homePosition = parseInt(document.getElementById('homePosition').value) || 0;
+            const awayPosition = parseInt(document.getElementById('awayPosition').value) || 0;
+            
+            // Get match context
+            const matchImportance = parseInt(document.getElementById('matchImportance').value) || 3;
+            const homeTopScorerMissing = document.getElementById('homeTopScorerMissing').checked;
+            const homeKeeperMissing = document.getElementById('homeKeeperMissing').checked;
+            const homeDefenderMissing = document.getElementById('homeDefenderMissing').checked;
+            const awayTopScorerMissing = document.getElementById('awayTopScorerMissing').checked;
+            const awayKeeperMissing = document.getElementById('awayKeeperMissing').checked;
+            const awayDefenderMissing = document.getElementById('awayDefenderMissing').checked;
+            const fixtureCongestion = document.getElementById('fixtureCongestion').checked;
+            const midweekEuropean = document.getElementById('midweekEuropean').checked;
+            const weatherConditions = document.getElementById('weatherConditions').value;
+            
+            
+            // Use preset values for advanced stats if not filled in
+            if (selectedPreset && presets[selectedPreset]) {
+                const p = presets[selectedPreset];
+                if (isNaN(homeOver25)) homeOver25 = p.homeOver25;
+                if (isNaN(awayOver25)) awayOver25 = p.awayOver25;
+            }
+            
+            // Default values if still not set
+            if (isNaN(homeCS)) homeCS = 25;
+            if (isNaN(awayCS)) awayCS = 20;
+            if (isNaN(homeOver25)) homeOver25 = 50;
+            if (isNaN(awayOver25)) awayOver25 = 45;
+            if (isNaN(homeBTTS)) homeBTTS = 50;
+            if (isNaN(awayBTTS)) awayBTTS = 50;
+            
+            // Normalized expected-goals model.
+            // xG/xGA are score-based proxies, so normalize each team's attack/defence
+            // against the selected league's home/away scoring baselines instead of
+            // multiplying raw values by a fixed 1.4 denominator. This avoids double-counting
+            // recent scoring and makes the model portable across leagues.
+            const leaguePrior = (selectedPreset && presets[selectedPreset]) ? presets[selectedPreset] : null;
+            const leagueHomeAvg = Math.max(0.80, leaguePrior ? leaguePrior.homeXG : 1.50);
+            const leagueAwayAvg = Math.max(0.60, leaguePrior ? leaguePrior.awayXG : 1.20);
+            const homeAdvantage = 1.05;
+
+            const homeAttackStrength = homeXG / leagueHomeAvg;
+            const awayDefenceWeakness = awayXGA / leagueHomeAvg;
+            const awayAttackStrength = awayXG / leagueAwayAvg;
+            const homeDefenceWeakness = homeXGA / leagueAwayAvg;
+
+            let homeLambda = leagueHomeAvg * Math.pow(homeAttackStrength, 0.60) * Math.pow(awayDefenceWeakness, 0.40) * homeAdvantage;
+            let awayLambda = leagueAwayAvg * Math.pow(awayAttackStrength, 0.60) * Math.pow(homeDefenceWeakness, 0.40);
+            
+            // Track context adjustments for explanation
+            const contextAdjustments = [];
+            
+            // Apply form adjustments (using weighted form)
+            const formDiff = (homeForm - awayForm) / 15; // -1 to 1
+            // Form is already represented in the score-derived xG proxies, so use only
+            // a small residual adjustment to avoid double-counting recent results.
+            const formAdjustment = 1 + (formDiff * 0.05);
+            homeLambda *= formAdjustment;
+            awayLambda /= formAdjustment;
+            
+            if (Math.abs(formDiff) > 0.2) {
+                contextAdjustments.push(formDiff > 0 ? 'Home momentum' : 'Away momentum');
+            }
+            
+            // Apply table position context adjustments
+            // Bottom 4 vs Top 6 = defensive setup likely
+            if (homePosition >= 17 && awayPosition <= 6) {
+                homeLambda *= 0.9;
+                awayLambda *= 0.9;
+                contextAdjustments.push('Bottom vs Top (defensive)');
+            }
+            if (awayPosition >= 17 && homePosition <= 6) {
+                homeLambda *= 0.9;
+                awayLambda *= 0.9;
+                contextAdjustments.push('Top vs Bottom (defensive)');
+            }
+            
+            // Top 6 vs Top 6 = often tactical
+            if (homePosition <= 6 && awayPosition <= 6 && homePosition > 0 && awayPosition > 0) {
+                homeLambda *= 0.95;
+                awayLambda *= 0.95;
+                contextAdjustments.push('Top 6 clash (tactical)');
+            }
+            
+            // Relegation 6-pointer = unpredictable
+            let confidenceReduction = 0;
+            if (homePosition >= 15 && awayPosition >= 15 && homePosition > 0 && awayPosition > 0) {
+                confidenceReduction = 4;
+                contextAdjustments.push('Relegation battle (volatile)');
+            }
+            // Recent-form effect is already applied through weighted form.
+
+            // Apply match importance adjustments
+            if (matchImportance <= 2) {
+                // Low motivation
+                homeLambda *= 0.9;
+                awayLambda *= 0.9;
+                contextAdjustments.push('Low stakes');
+            }
+            
+            // Apply key player availability adjustments
+            if (homeTopScorerMissing) {
+                homeLambda *= 0.75; // 25% reduction
+                contextAdjustments.push('Home top scorer out');
+            }
+            if (awayTopScorerMissing) {
+                awayLambda *= 0.75;
+                contextAdjustments.push('Away top scorer out');
+            }
+            if (homeKeeperMissing) {
+                awayLambda *= 1.15; // Opponent benefits
+                contextAdjustments.push('Home keeper out');
+            }
+            if (awayKeeperMissing) {
+                homeLambda *= 1.15;
+                contextAdjustments.push('Away keeper out');
+            }
+            if (homeDefenderMissing) {
+                awayLambda *= 1.12;
+                contextAdjustments.push('Home defender out');
+            }
+            if (awayDefenderMissing) {
+                homeLambda *= 1.12;
+                contextAdjustments.push('Away defender out');
+            }
+            
+            // Apply fixture congestion
+            if (fixtureCongestion || midweekEuropean) {
+                homeLambda *= 0.92;
+                awayLambda *= 0.92;
+                contextAdjustments.push('Fixture congestion');
+            }
+            
+            // Apply weather impact
+            const weatherMult = weatherImpact[weatherConditions].multiplier;
+            if (weatherMult !== 1.0) {
+                homeLambda *= weatherMult;
+                awayLambda *= weatherMult;
+                contextAdjustments.push(`${weatherConditions} conditions`);
+            }
+            
+            // Apply league variance factor
+            let leagueVariance = 1.0;
+            if (selectedPreset && presets[selectedPreset]) {
+                leagueVariance = presets[selectedPreset].variance || 1.0;
+            }
+            homeLambda *= leagueVariance;
+            awayLambda *= leagueVariance;
+            
+            // Calculate probabilities
+            const probs = calculateGoalProbabilities(homeLambda, awayLambda);
+            
+            // O/U probabilities come directly from the Poisson model.
+            const blendedOver25 = probs.over25;
+            const blendedUnder25 = probs.under25;
+            
+            // Calibrated O/U betting threshold. The old rules were too restrictive
+            // because they required both a high probability AND a hard league-average
+            // gate, which produced almost no qualifying EPL bets.
+            let threshold = 60;
+            if (selectedPreset && presets[selectedPreset]) {
+                threshold = Math.min(60, presets[selectedPreset].threshold || 60);
+            }
+            
+            // Apply confidence reduction for special circumstances
+            threshold += confidenceReduction;
+            
+            // Get league average for contextual validation. This is now a soft
+            // directional check rather than a hard requirement.
+            let leagueAvg = 2.5; // default
+            if (selectedPreset && presets[selectedPreset]) {
+                leagueAvg = presets[selectedPreset].leagueAvg || 2.5;
+            }
+
+            let bestBet, confidence, reason, betClass;
+
+            // Check if we have a valid over bet. Expected-total guards are
+            // intentionally close to the 2.5 line to avoid rejecting strong
+            // probability signals simply because the league baseline is nearby.
+            const isOverThreshold = blendedOver25 >= threshold;
+            const isOverXGLimit = probs.expectedTotal >= 2.6;
+            const isOverLeagueAvg = probs.expectedTotal >= (leagueAvg - 0.15);
+
+            // Check if we have a valid under bet.
+            const isUnderThreshold = blendedUnder25 >= threshold;
+            const isUnderXGLimit = probs.expectedTotal <= 2.4;
+            const isUnderLeagueAvg = probs.expectedTotal <= (leagueAvg + 0.15);
+
+            if (isOverThreshold && isOverXGLimit && isOverLeagueAvg) {
+                bestBet = 'Over 2.5 Goals';
+                confidence = Math.round(blendedOver25);
+                betClass = 'over';
+                if (probs.expectedTotal > 3) {
+                    reason = 'High xG totals + attacking matchup suggests goal fest';
+                } else if (homeForm > awayForm + 3) {
+                    reason = 'Home form advantage should drive scoring';
+                } else {
+                    reason = 'Both teams create quality chances, goals expected';
+                }
+            } else if (isUnderThreshold && isUnderXGLimit && isUnderLeagueAvg) {
+                bestBet = 'Under 2.5 Goals';
+                confidence = Math.round(blendedUnder25);
+                betClass = 'under';
+                if (probs.expectedTotal < 2.2) {
+                    reason = 'Low xG totals + solid defenses = tight game';
+                } else if (homeCS > 35 && awayCS > 30) {
+                    reason = 'Both teams keep clean sheets regularly';
+                } else {
+                    reason = 'Defensive matchup should limit scoring';
+                }
+            } else {
+                // No bet - determine why
+                bestBet = 'No Bet';
+                confidence = Math.round(Math.max(blendedOver25, blendedUnder25));
+                betClass = 'nobet';
+
+                // Provide specific reason for no bet
+                if (isOverThreshold && !isOverXGLimit) {
+                    reason = `Expected goals (${probs.expectedTotal.toFixed(2)}) below 2.6 threshold for Over bet`;
+                } else if (isOverThreshold && !isOverLeagueAvg) {
+                    reason = `Expected goals (${probs.expectedTotal.toFixed(2)}) below league average (${leagueAvg}) - no Over validation`;
+                } else if (isUnderThreshold && !isUnderXGLimit) {
+                    reason = `Expected goals (${probs.expectedTotal.toFixed(2)}) above 2.4 threshold for Under bet`;
+                } else if (isUnderThreshold && !isUnderLeagueAvg) {
+                    reason = `Expected goals (${probs.expectedTotal.toFixed(2)}) above league average (${leagueAvg}) - no Under validation`;
+                } else {
+                    reason = `Confidence below ${threshold}% - insufficient edge for betting`;
+                }
+            }
+
+            // Calculate fair odds (only if there's a bet)
+            const fairOdds = confidence > 0 ? (100 / confidence).toFixed(2) : '-';
+            
+            // Determine confidence tier
+            let confidenceTier, tierClass, tierText;
+            if (confidence >= 75) {
+                confidenceTier = 'high';
+                tierClass = 'tier-high';
+                tierText = 'High Confidence';
+            } else if (confidence >= 68) {
+                confidenceTier = 'strong';
+                tierClass = 'tier-strong';
+                tierText = 'Strong Edge';
+            } else if (confidence >= 64) {
+                confidenceTier = 'moderate';
+                tierClass = 'tier-moderate';
+                tierText = 'Moderate Edge';
+            } else {
+                confidenceTier = 'low';
+                tierClass = '';
+                tierText = '';
+            }
+            
+            // Determine value
+            let valueClass, valueText;
+            if (confidence >= 65) {
+                valueClass = 'value-yes';
+                valueText = 'Strong Value Bet';
+            } else if (confidence >= 64) {
+                valueClass = 'value-maybe';
+                valueText = 'Moderate Value';
+            } else {
+                valueClass = 'value-no';
+                valueText = 'Low Confidence - Skip';
+            }
+            
+            let contradictionWarning = '';
+// Build context explanation
+            let contextExplanation = '';
+            if (contextAdjustments.length > 0) {
+                contextExplanation = 'Key factors: ' + contextAdjustments.join(' + ');
+            }
+            
+            // Store prediction with all new fields
+            const topScoreline = probs.scorelines && probs.scorelines.length ? probs.scorelines[0] : null;
+            const winnerCandidates = [
+                { name: homeTeam, prob: probs.homeWin },
+                { name: 'Draw', prob: probs.draw },
+                { name: awayTeam, prob: probs.awayWin }
+            ];
+            winnerCandidates.sort((a, b) => b.prob - a.prob);
+            const predictedWinner = winnerCandidates.length ? winnerCandidates[0].name : '—';
+            const leadScore = probs.scorelines && probs.scorelines.length ? probs.scorelines[0] : null;
+            const winnerText = predictedWinner === 'Draw' ? 'a closely contested match with a draw carrying the highest result probability' : predictedWinner + ' having the strongest result probability';
+            const goalTempo = probs.expectedTotal >= 3.0 ? 'an open, high-scoring game' : probs.expectedTotal <= 2.2 ? 'a relatively tight, low-scoring game' : 'a fairly balanced scoring game';
+            const bttsText = probs.btts >= 60 ? 'Both teams have a strong chance of scoring.' : probs.btts <= 40 ? 'There is a relatively low chance of both teams scoring.' : 'There is a reasonable possibility that both teams get on the scoresheet.';
+            const formText = Math.abs(homeForm - awayForm) >= 3 ? (homeForm > awayForm ? homeTeam + ' come in with the better recent form.' : awayTeam + ' come in with the better recent form.') : 'Recent form is fairly close between the teams.';
+            const scoreText = leadScore ? 'The leading scoreline is ' + leadScore.home + '-' + leadScore.away + ' (' + (leadScore.prob * 100).toFixed(0) + '%).' : '';
+            const contextText = contextAdjustments.length ? ' Key context: ' + contextAdjustments.join(', ') + '.' : '';
+            const matchBrief = winnerText.charAt(0).toUpperCase() + winnerText.slice(1) + ', with expected goals around ' + probs.expectedTotal.toFixed(2) + '. The overall setup points to ' + goalTempo + '. ' + bttsText + ' ' + formText + ' ' + scoreText + contextText;
+
+            currentPrediction = {
+                homeTeam,
+                awayTeam,
+                prediction: bestBet,
+                predictedWinner,
+                confidence,
+                odds: fairOdds,
+                reason,
+                matchBrief,
+                over25: Math.round(blendedOver25),
+                under25: Math.round(blendedUnder25),
+                btts: Math.round(probs.btts),
+                homeWin: Math.round(probs.homeWin),
+                drawProb: Math.round(probs.draw),
+                awayWin: Math.round(probs.awayWin),
+                expectedGoals: probs.expectedTotal.toFixed(2),
+                homeExp: homeLambda.toFixed(2),
+                awayExp: awayLambda.toFixed(2),
+                date: new Date().toLocaleDateString(),
+                scorelines: probs.scorelines,
+                // Store full stats for refill
+                homeXG,
+                homeXGA,
+                awayXG,
+                awayXGA,
+                homeForm,
+                awayForm,
+                homeCS,
+                awayCS,
+                homeOver25,
+                awayOver25,
+                homeBTTS,
+                awayBTTS,
+                homeFormState: JSON.parse(JSON.stringify(formState.home)),
+                awayFormState: JSON.parse(JSON.stringify(formState.away)),
+                // New fields
+                homePosition,
+                awayPosition,
+                matchImportance,
+                missingKeyPlayers: [
+                    ...(homeTopScorerMissing ? ['home_striker'] : []),
+                    ...(homeKeeperMissing ? ['home_keeper'] : []),
+                    ...(homeDefenderMissing ? ['home_defender'] : []),
+                    ...(awayTopScorerMissing ? ['away_striker'] : []),
+                    ...(awayKeeperMissing ? ['away_keeper'] : []),
+                    ...(awayDefenderMissing ? ['away_defender'] : [])
+                ],
+                fixtureCongestion: fixtureCongestion || midweekEuropean,
+                weightedFormUsed: true,
+                confidenceTier,
+                weatherConditions,
+                contextAdjustments
+            };
+            
+            // Update the visible Prediction Result with the match brief.
+            // The old betting-summary header has intentionally been removed from the UI.
+            const briefElement = document.getElementById('matchBrief');
+            if (briefElement) briefElement.textContent = matchBrief;
+            
+            // Update probabilities
+            document.getElementById('probOver25').textContent = Math.round(blendedOver25) + '%';
+            document.getElementById('probOver25').className = 'market-prob ' + (blendedOver25 >= 60 ? 'prob-high' : blendedOver25 >= 45 ? 'prob-medium' : 'prob-low');
+            document.getElementById('probUnder25').textContent = Math.round(blendedUnder25) + '%';
+            document.getElementById('probUnder25').className = 'market-prob ' + (blendedUnder25 >= 60 ? 'prob-high' : blendedUnder25 >= 45 ? 'prob-medium' : 'prob-low');
+            document.getElementById('probBTTS').textContent = Math.round(probs.btts) + '%';
+            document.getElementById('probBTTS').className = 'market-prob ' + (probs.btts >= 55 ? 'prob-high' : probs.btts >= 45 ? 'prob-medium' : 'prob-low');
+            
+            // Update analysis
+            document.getElementById('expGoals').textContent = probs.expectedTotal.toFixed(2);
+            document.getElementById('homeExpGoals').textContent = homeLambda.toFixed(2);
+            document.getElementById('awayExpGoals').textContent = awayLambda.toFixed(2);
+            
+            const formDiffText = homeForm > awayForm ? 'Home +' + (homeForm - awayForm).toFixed(1) : awayForm > homeForm ? 'Away +' + (awayForm - homeForm).toFixed(1) : 'Even';
+            document.getElementById('formAdv').textContent = formDiffText;
+            document.getElementById('formAdv').className = 'analysis-value ' + (homeForm > awayForm + 3 ? 'positive' : awayForm > homeForm + 3 ? 'negative' : 'neutral');
+            
+            const attDefText = (homeXG + awayXG) > (homeXGA + awayXGA) ? 'Attacking' : 'Defensive';
+            document.getElementById('attDef').textContent = attDefText;
+            document.getElementById('attDef').className = 'analysis-value ' + ((homeXG + awayXG) > 3 ? 'positive' : 'neutral');
+            
+            // Show context factors if any
+            const contextFactorsRow = document.getElementById('contextFactorsRow');
+            if (contextAdjustments.length > 0) {
+                document.getElementById('contextFactors').textContent = contextAdjustments.length + ' applied';
+                contextFactorsRow.style.display = 'flex';
+            } else {
+                contextFactorsRow.style.display = 'none';
+            }
+            
+            // Update scorelines
+            const scoreGrid = document.getElementById('scoreGrid');
+            scoreGrid.innerHTML = probs.scorelines.slice(0, 8).map((s, i) => 
+                '<div class="score-item ' + (i < 3 ? 'highlighted' : '') + '">' +
+                '<div class="score-line">' + s.home + '-' + s.away + '</div>' +
+                '<div class="score-prob">' + (s.prob * 100).toFixed(1) + '%</div>' +
+                '</div>'
+            ).join('');
+            
+            document.getElementById('resultCard').classList.add('show');
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function saveToHistory() {
+            if (!currentPrediction) return;
+            const history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            const newItem = { ...currentPrediction, id: Date.now(), status: 'pending' };
+            history.unshift(newItem);
+            localStorage.setItem('oup_history', JSON.stringify(history));
+            renderHistory();
+            showToast('Prediction saved!');
+            document.getElementById('resultCard').classList.remove('show');
+            currentPrediction = null;
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            const searchTerm = document.getElementById('searchHistory').value.toLowerCase();
+            const list = document.getElementById('historyList');
+            
+            const won = history.filter(h => h.status === 'won').length;
+            const lost = history.filter(h => h.status === 'lost').length;
+            const pending = history.filter(h => h.status === 'pending').length;
+            const total = won + lost;
+            const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
+            
+            let totalStake = total;
+            let totalReturn = history.filter(h => h.status === 'won').reduce((sum, h) => sum + (parseFloat(h.odds) || 0), 0);
+            const roi = total > 0 ? ((totalReturn - totalStake) / totalStake * 100).toFixed(1) : 0;
+            
+            document.getElementById('wonCount').textContent = won;
+            document.getElementById('lostCount').textContent = lost;
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('roiValue').textContent = roi + '%';
+            document.getElementById('roiValue').className = roi >= 0 ? '' : 'negative';
+            document.getElementById('historyCount').textContent = history.length + ' bets';
+            
+            let filtered = history;
+            if (historyFilter !== 'all') {
+                filtered = history.filter(h => h.status === historyFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(h =>
+                    (h.homeTeam + ' vs ' + h.awayTeam).toLowerCase().includes(searchTerm) ||
+                    h.prediction.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state">No predictions in this category</div>';
+                return;
+            }
+            
+            list.innerHTML = filtered.map(item => `
+                <div class="history-item ${item.status}" onclick="refillFromHistory(${item.id}, event)">
+                    <div class="history-header">
+                        <span class="history-teams">${item.homeTeam} vs ${item.awayTeam}</span>
+                        <span class="history-date">${item.date}</span>
+                    </div>
+                    <div class="history-meta-row"><span>Winner <b>${item.predictedWinner || (item.scorelines && item.scorelines.length ? (item.scorelines[0].home > item.scorelines[0].away ? item.homeTeam : item.scorelines[0].away > item.scorelines[0].home ? item.awayTeam : 'Draw') : '—')}</b></span><span>BTTS <b>${item.btts != null ? (item.btts >= 50 ? 'YES' : 'NO') + ' (' + Math.round(item.btts) + '%)' : '—'}</b></span><span>Over/Under 2.5 <b>${item.over25 != null ? (item.over25 >= 50 ? 'OVER' : 'UNDER') + ' (' + Math.round(item.over25 >= 50 ? item.over25 : item.under25) + '%)' : '—'}</b></span><span>Most likely <b>${item.scorelines && item.scorelines.length ? item.scorelines[0].home + '-' + item.scorelines[0].away : '—'}</b></span></div>
+                    <div style="font-size:0.7rem;color:#6b7280;margin-top:4px">${item.reason}</div>
+                    ${item.confidenceTier ? `<div style="font-size:0.65rem;margin-top:4px"><span class="confidence-tier tier-${item.confidenceTier}">${item.confidenceTier === 'high' ? 'High Confidence' : item.confidenceTier === 'strong' ? 'Strong Edge' : 'Moderate Edge'}</span></div>` : ''}
+                    ${item.status === 'pending' ? `
+                        <div class="history-actions" onclick="event.stopPropagation()">
+                            <button class="status-btn status-won-btn" onclick="updateStatus(${item.id},'won')">Won</button>
+                            <button class="status-btn status-lost-btn" onclick="updateStatus(${item.id},'lost')">Lost</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    ` : `
+                        <div class="history-actions" onclick="event.stopPropagation()">
+                            <button class="status-btn" style="background:#1f2937;color:#9ca3af;border:1px solid #374151" onclick="updateStatus(${item.id},'pending')">Undo</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+            
+            if (history.length > 0) {
+                document.getElementById('historyCard').classList.add('show');
+            }
+        }
+
+        function refillFromHistory(id, event) {
+            // Don't refill if clicking on buttons
+            if (event && event.target.tagName === 'BUTTON') return;
+            
+            const history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            const item = history.find(h => h.id === id);
+            if (!item) return;
+            
+            // Fill in the form with history item data
+            document.getElementById('homeTeam').value = item.homeTeam || '';
+            document.getElementById('awayTeam').value = item.awayTeam || '';
+            document.getElementById('homeXG').value = item.homeXG || '';
+            document.getElementById('homeXGA').value = item.homeXGA || '';
+            document.getElementById('awayXG').value = item.awayXG || '';
+            document.getElementById('awayXGA').value = item.awayXGA || '';
+            document.getElementById('homeForm').value = item.homeForm || '0';
+            document.getElementById('awayForm').value = item.awayForm || '0';
+            document.getElementById('homeCS').value = item.homeCS || '';
+            document.getElementById('awayCS').value = item.awayCS || '';
+            document.getElementById('homeOver25').value = item.homeOver25 || '';
+            document.getElementById('awayOver25').value = item.awayOver25 || '';
+            document.getElementById('homeBTTS').value = item.homeBTTS || '';
+            document.getElementById('awayBTTS').value = item.awayBTTS || '';
+            
+            // Restore form state if available (with backward compatibility)
+            if (item.homeFormState) {
+                if (Array.isArray(item.homeFormState)) {
+                    // Old format
+                    formState.home.results = item.homeFormState;
+                    formState.home.opponentStrength = ['normal', 'normal', 'normal', 'normal', 'normal'];
+                } else {
+                    // New format
+                    formState.home = item.homeFormState;
+                }
+                updateFormDisplay('home');
+                calculateWeightedFormPoints('home');
+            }
+            if (item.awayFormState) {
+                if (Array.isArray(item.awayFormState)) {
+                    // Old format
+                    formState.away.results = item.awayFormState;
+                    formState.away.opponentStrength = ['normal', 'normal', 'normal', 'normal', 'normal'];
+                } else {
+                    // New format
+                    formState.away = item.awayFormState;
+                }
+                updateFormDisplay('away');
+                calculateWeightedFormPoints('away');
+            }
+            
+            // Restore new fields with backward compatibility
+            if (item.homePosition) document.getElementById('homePosition').value = item.homePosition;
+            if (item.awayPosition) document.getElementById('awayPosition').value = item.awayPosition;
+            if (item.matchImportance) {
+                document.getElementById('matchImportance').value = item.matchImportance;
+                updateImportanceDisplay();
+            }
+            if (item.missingKeyPlayers) {
+                document.getElementById('homeTopScorerMissing').checked = item.missingKeyPlayers.includes('home_striker');
+                document.getElementById('homeKeeperMissing').checked = item.missingKeyPlayers.includes('home_keeper');
+                document.getElementById('homeDefenderMissing').checked = item.missingKeyPlayers.includes('home_defender');
+                document.getElementById('awayTopScorerMissing').checked = item.missingKeyPlayers.includes('away_striker');
+                document.getElementById('awayKeeperMissing').checked = item.missingKeyPlayers.includes('away_keeper');
+                document.getElementById('awayDefenderMissing').checked = item.missingKeyPlayers.includes('away_defender');
+            }
+            if (item.homeDefenderMissing !== undefined) document.getElementById('homeDefenderMissing').checked = item.homeDefenderMissing;
+            if (item.awayDefenderMissing !== undefined) document.getElementById('awayDefenderMissing').checked = item.awayDefenderMissing;
+            if (item.fixtureCongestion !== undefined) {
+                document.getElementById('fixtureCongestion').checked = item.fixtureCongestion;
+            }
+            if (item.weatherConditions) {
+                document.getElementById('weatherConditions').value = item.weatherConditions;
+                updateWeatherHint();
+            }
+            
+            
+            saveFormData();
+            showToast('Stats refilled from history');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Close modal if open
+            closeHistoryModal();
+        }
+
+        function updateStatus(id, status) {
+            let history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            const item = history.find(h => h.id === id);
+            if (item) {
+                item.status = status;
+                localStorage.setItem('oup_history', JSON.stringify(history));
+                renderHistory();
+                if (document.getElementById('historyModal').classList.contains('show')) {
+                    renderModalHistory();
+                }
+            }
+        }
+
+        function deletePrediction(id) {
+            let history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            history = history.filter(h => h.id !== id);
+            localStorage.setItem('oup_history', JSON.stringify(history));
+            renderHistory();
+            if (document.getElementById('historyModal').classList.contains('show')) {
+                renderModalHistory();
+            }
+        }
+
+        function filterHistory(filter, element) {
+            historyFilter = filter;
+            document.querySelectorAll('.filter-tabs .filter-tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if (confirm('Clear all prediction history? This cannot be undone.')) {
+                localStorage.removeItem('oup_history');
+                renderHistory();
+                document.getElementById('historyCard').classList.remove('show');
+                showToast('History cleared');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('homeTeam').value = '';
+            document.getElementById('awayTeam').value = '';
+            document.getElementById('homeXG').value = '';
+            document.getElementById('homeXGA').value = '';
+            document.getElementById('awayXG').value = '';
+            document.getElementById('awayXGA').value = '';
+            document.getElementById('homeForm').value = '0';
+            document.getElementById('awayForm').value = '0';
+            document.getElementById('homeCS').value = '';
+            document.getElementById('awayCS').value = '';
+            document.getElementById('homeOver25').value = '';
+            document.getElementById('awayOver25').value = '';
+            document.getElementById('homeBTTS').value = '';
+            document.getElementById('awayBTTS').value = '';
+            document.getElementById('leaguePreset').value = '';
+            selectedPreset = null;
+            
+            // Reset new fields
+            document.getElementById('homePosition').value = '';
+            document.getElementById('awayPosition').value = '';
+            document.getElementById('matchImportance').value = '3';
+            document.getElementById('homeTopScorerMissing').checked = false;
+            document.getElementById('homeKeeperMissing').checked = false;
+            document.getElementById('homeDefenderMissing').checked = false;
+            document.getElementById('awayTopScorerMissing').checked = false;
+            document.getElementById('awayKeeperMissing').checked = false;
+            document.getElementById('awayDefenderMissing').checked = false;
+            document.getElementById('fixtureCongestion').checked = false;
+            document.getElementById('midweekEuropean').checked = false;
+            document.getElementById('weatherConditions').value = 'good';
+            
+            // Reset form state
+            formState.home = { scores: ['', '', '', '', ''], results: ['empty','empty','empty','empty','empty'], opponentStrength: ['normal','normal','normal','normal','normal'] };
+            formState.away = { scores: ['', '', '', '', ''], results: ['empty','empty','empty','empty','empty'], opponentStrength: ['normal','normal','normal','normal','normal'] };
+            document.querySelectorAll('.form-score').forEach(el => { el.value=''; el.classList.remove('input-error'); });
+            updateFormDisplay('home');
+            updateFormDisplay('away');
+            calculateWeightedFormPoints('home');
+            calculateWeightedFormPoints('away');
+            updateAutoDerivedStats('home');
+            updateAutoDerivedStats('away');
+            
+            updateImportanceDisplay();
+            updateWeatherHint();
+            
+            
+            document.getElementById('resultCard').classList.remove('show');
+            document.getElementById('coreError').classList.remove('show');
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            localStorage.removeItem('oup_formData');
+            localStorage.removeItem('oup_toggleState');
+            currentPrediction = null;
+            
+            // Collapse all toggle sections
+            document.getElementById('tableContextToggle').classList.remove('expanded');
+            document.getElementById('tableContextStats').classList.remove('show');
+            document.getElementById('matchContextToggle').classList.remove('expanded');
+            document.getElementById('matchContextStats').classList.remove('show');
+            document.getElementById('advancedToggle').classList.remove('expanded');
+            document.getElementById('advancedStats').classList.remove('show');
+            
+            showToast('Form reset');
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + (isError ? 'error' : '') + ' show';
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Fullscreen History Modal Functions
+        function openHistoryModal() {
+            document.getElementById('historyModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+            renderModalHistory();
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function renderModalHistory() {
+            const history = JSON.parse(localStorage.getItem('oup_history') || '[]');
+            const searchTerm = document.getElementById('modalSearchHistory').value.toLowerCase();
+            const list = document.getElementById('modalHistoryList');
+            
+            const won = history.filter(h => h.status === 'won').length;
+            const lost = history.filter(h => h.status === 'lost').length;
+            const pending = history.filter(h => h.status === 'pending').length;
+            const total = won + lost;
+            const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
+            
+            let totalStake = total;
+            let totalReturn = history.filter(h => h.status === 'won').reduce((sum, h) => sum + (parseFloat(h.odds) || 0), 0);
+            const roi = total > 0 ? ((totalReturn - totalStake) / totalStake * 100).toFixed(1) : 0;
+            const profit = (totalReturn - totalStake).toFixed(1);
+            
+            const avgOdds = won > 0 ? (totalReturn / won).toFixed(2) : '0.00';
+            
+            // Update modal stats
+            document.getElementById('modalTotalBets').textContent = history.length;
+            document.getElementById('modalWon').textContent = won;
+            document.getElementById('modalLost').textContent = lost;
+            document.getElementById('modalWinRate').textContent = winRate + '%';
+            document.getElementById('modalROI').textContent = roi + '%';
+            document.getElementById('modalROI').className = 'history-modal-stat-value ' + (roi >= 0 ? 'positive' : 'negative');
+            document.getElementById('modalAvgOdds').textContent = avgOdds;
+            document.getElementById('modalPending').textContent = pending;
+            document.getElementById('modalProfit').textContent = profit + 'u';
+            document.getElementById('modalProfit').className = 'history-modal-stat-value ' + (profit >= 0 ? 'positive' : 'negative');
+            
+            let filtered = history;
+            if (modalHistoryFilter !== 'all') {
+                filtered = history.filter(h => h.status === modalHistoryFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(h =>
+                    (h.homeTeam + ' vs ' + h.awayTeam).toLowerCase().includes(searchTerm) ||
+                    h.prediction.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state">No predictions in this category</div>';
+                return;
+            }
+            
+            list.innerHTML = filtered.map(item => `
+                <div class="history-item ${item.status}" onclick="refillFromHistory(${item.id}, event)">
+                    <div class="history-header">
+                        <span class="history-teams">${item.homeTeam} vs ${item.awayTeam}</span>
+                        <span class="history-date">${item.date}</span>
+                    </div>
+                    <div class="history-meta-row"><span>Winner <b>${item.predictedWinner || (item.scorelines && item.scorelines.length ? (item.scorelines[0].home > item.scorelines[0].away ? item.homeTeam : item.scorelines[0].away > item.scorelines[0].home ? item.awayTeam : 'Draw') : '—')}</b></span><span>BTTS <b>${item.btts != null ? (item.btts >= 50 ? 'YES' : 'NO') + ' (' + Math.round(item.btts) + '%)' : '—'}</b></span><span>Over/Under 2.5 <b>${item.over25 != null ? (item.over25 >= 50 ? 'OVER' : 'UNDER') + ' (' + Math.round(item.over25 >= 50 ? item.over25 : item.under25) + '%)' : '—'}</b></span><span>Most likely <b>${item.scorelines && item.scorelines.length ? item.scorelines[0].home + '-' + item.scorelines[0].away : '—'}</b></span></div>
+                    <div style="font-size:0.7rem;color:#6b7280;margin-top:4px">${item.reason}</div>
+                    ${item.confidenceTier ? `<div style="font-size:0.65rem;margin-top:4px"><span class="confidence-tier tier-${item.confidenceTier}">${item.confidenceTier === 'high' ? 'High Confidence' : item.confidenceTier === 'strong' ? 'Strong Edge' : 'Moderate Edge'}</span></div>` : ''}
+                    ${item.contextAdjustments && item.contextAdjustments.length > 0 ? `<div style="font-size:0.65rem;color:#6b7280;margin-top:4px">Factors: ${item.contextAdjustments.join(', ')}</div>` : ''}
+                    <div style="font-size:0.65rem;color:#6b7280;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap">
+                        <span>xG: ${item.homeXG || '-'}/${item.awayXG || '-'}</span>
+                        <span>xGA: ${item.homeXGA || '-'}/${item.awayXGA || '-'}</span>
+                        <span>Exp: ${item.expectedGoals || '-'}</span>
+                        ${item.homePosition ? `<span>Pos: H${item.homePosition}/A${item.awayPosition}</span>` : ''}
+                    </div>
+                    ${item.status === 'pending' ? `
+                        <div class="history-actions" onclick="event.stopPropagation()">
+                            <button class="status-btn status-won-btn" onclick="updateStatus(${item.id},'won')">Won</button>
+                            <button class="status-btn status-lost-btn" onclick="updateStatus(${item.id},'lost')">Lost</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    ` : `
+                        <div class="history-actions" onclick="event.stopPropagation()">
+                            <button class="status-btn" style="background:#1f2937;color:#9ca3af;border:1px solid #374151" onclick="updateStatus(${item.id},'pending')">Undo</button>
+                            <button class="delete-btn" onclick="deletePrediction(${item.id})">Delete</button>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        function filterModalHistory(filter, element) {
+            modalHistoryFilter = filter;
+            document.querySelectorAll('#historyModal .filter-tabs .filter-tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            renderModalHistory();
+        }
+</script>
+</body>
+</html>
